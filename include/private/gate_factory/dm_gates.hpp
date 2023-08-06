@@ -55,7 +55,21 @@ namespace NWQSim
             }
             else
             {
-                sim_dm_gates.push_back(generateDMGate(g.op_name, g.qubit, g.ctrl, g.theta));
+                auto gate = generateDMGate(g.op_name, g.qubit, g.ctrl, g.theta);
+                if (g.op_name == OP::DELAY)
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        for (int j = 0; j < 4; ++j)
+                        {
+                            double real_part = gate.gm_real[i * 4 + j];
+                            double imag_part = gate.gm_imag[i * 4 + j];
+
+                            std::cout << std::setw(6) << std::fixed << std::setprecision(3) << real_part << "+" << std::setw(5) << imag_part << "j ";
+                        }
+                        std::cout << std::endl;
+                    }
+
+                sim_dm_gates.push_back(gate);
             }
         }
         return sim_dm_gates;

@@ -54,7 +54,7 @@ string DEFAULT_GATES[] = {
     "CCX", "CRX", "CRY", "CRZ", "CU", "CU1", "CU3",
     "RESET", "SWAP", "CSWAP",
     "ID", "RI", "P", "CS", "CSDG", "CT", "CTDG", "CSX", "CP",
-    "RZZ", "RXX", "RYY"};
+    "RZZ", "RXX", "RYY", "DELAY"};
 
 const string OPENQASM("OPENQASM");
 const string QREG("QREG");

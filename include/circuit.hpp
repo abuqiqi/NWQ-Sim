@@ -482,6 +482,16 @@ namespace NWQSim
             gates->push_back(G);
         }
 
+        void DELAY(ValType gate_len, IdxType qubit)
+        {
+            // Identity gate with variable gate length (stored in theta)
+            /** ID  = [1 0]
+                      [0 1]
+            */
+            Gate G(OP::DELAY, qubit, -1, 1, gate_len);
+            gates->push_back(G);
+        }
+
         void SWAP(IdxType ctrl, IdxType qubit)
         {
             // SWAP gate
