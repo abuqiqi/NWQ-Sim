@@ -545,7 +545,7 @@ map<string, IdxType> *qasm_parser::execute(shared_ptr<QuantumState> state, IdxTy
 
         for (IdxType i = 0; i < repetition; i++)
         {
-            // printProgressBar(i, repetition, start);
+            printProgressBar(i, repetition, start);
 
             IdxType *sub_result = sub_execute(state, 1, print_metrics);
 
@@ -553,12 +553,12 @@ map<string, IdxType> *qasm_parser::execute(shared_ptr<QuantumState> state, IdxTy
             if (sub_result == NULL)
             {
                 results[i] = -measurement_count; // APPEND (-) num measures succeded if didn't finish
-                printf("Trail %d failed at %d measurement\n", i, measurement_count);
+                // printf("Trail %d failed at %d measurement\n", i, measurement_count);
             }
             else
             {
                 results[i] = sub_result[0];
-                printf("%dth trail succeeded!\n", i);
+                // printf("%dth trail succeeded!\n", i);
             }
         }
     }

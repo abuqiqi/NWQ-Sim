@@ -69,6 +69,35 @@ namespace NWQSim
                   << " Remaining: " << formatDuration(std::chrono::seconds(remaining)) << "\033[0m  \r";
         std::cout.flush();
     }
+
+    // inline void printProgressBar(int current, int total, std::chrono::time_point<std::chrono::steady_clock> start_time)
+    // {
+    //     const int barWidth = 50;
+    //     auto now = std::chrono::steady_clock::now();
+    //     auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - start_time).count();
+    //     auto estimated = (total > current && current > 0) ? elapsed * total / current : elapsed;
+    //     auto remaining = estimated - elapsed;
+
+    //     std::cout << "\r\033[1;34m["; // '\r' added at the beginning to overwrite the line
+    //     int pos = barWidth * current / total;
+    //     for (int i = 0; i < barWidth; ++i)
+    //     {
+    //         if (i < pos)
+    //             std::cout << "=";
+    //         else if (i == pos)
+    //             std::cout << ">";
+    //         else
+    //             std::cout << " ";
+    //     }
+
+    //     std::cout << "] "
+    //               << "\033[1;32m" << int(current * 100.0 / total) << " % "
+    //               << "\033[1;33mElapsed: " << formatDuration(std::chrono::seconds(elapsed))
+    //               << " Estimated: " << formatDuration(std::chrono::seconds(estimated))
+    //               << " Remaining: " << formatDuration(std::chrono::seconds(remaining)) << "\033[0m  ";
+    //     std::cout.flush();
+    // }
+
     inline bool hasEvenParity(unsigned long long x, const std::vector<size_t> &in_qubitIndices)
     {
         size_t count = 0;

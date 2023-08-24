@@ -124,6 +124,7 @@ int main(int argc, char **argv)
         if (state->i_proc == 0)
         {
             print_counts(counts, total_shots);
+            printf("Total Kernel time: %.3lf ms\n", state->total_sim_time());
         }
 
         delete counts;

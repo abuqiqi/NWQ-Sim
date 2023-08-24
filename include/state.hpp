@@ -31,6 +31,11 @@ namespace NWQSim
 
         virtual void sim(std::shared_ptr<NWQSim::Circuit> circuit) = 0;
 
+        virtual ValType total_sim_time()
+        {
+            return 0.0;
+        };
+
         virtual IdxType *get_results() = 0;
         virtual IdxType measure(IdxType qubit) = 0;
         virtual IdxType *measure_all(IdxType repetition) = 0;

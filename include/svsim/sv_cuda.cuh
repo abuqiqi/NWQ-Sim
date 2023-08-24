@@ -166,6 +166,8 @@ namespace NWQSim
             sim_timer.stop_timer();
             sim_time = sim_timer.measure();
 
+            total_time += sim_time;
+
             // Copy the results back to CPU
             cudaSafeCall(cudaMemcpy(results, results_gpu, n_repetitations * sizeof(IdxType), cudaMemcpyDeviceToHost));
             cudaSafeCall(cudaMemcpy(probs, probs_gpu, n_mid_measure * sizeof(ValType), cudaMemcpyDeviceToHost));
@@ -194,6 +196,11 @@ namespace NWQSim
 
                 printf("Total success probability: %lf\n", succeed_prob);
             }
+        }
+
+        ValType total_sim_time() override
+        {
+            return total_time;
         }
 
         IdxType *get_results() override
@@ -337,6 +344,7 @@ namespace NWQSim
         IdxType n_repetitations = 0;
         IdxType n_mid_measure = 0;
         bool multi_shots = false;
+        ValType total_time = 0.;
 
         // Random
         std::mt19937 rng;
