@@ -8,6 +8,7 @@
 #include <string>
 #include <cstring>
 #include <vector>
+#include <chrono>
 
 #include "parser_util.hpp"
 #include "lexer.hpp"
@@ -36,8 +37,7 @@ private:
 
     vector<token> cur_inst;
 
-    bool contains_if = false;
-    bool measure_all = true;
+    bool dynamic_circuit = false;
     bool skip_if = false;
 
     /* Lexer Object */
@@ -49,6 +49,10 @@ private:
     string line;
     stringstream ss;
 
+    // MID MEASUREMENT
+    int measurement_count = 0;
+    bool force_measure = false;
+
     /* Helper Functions */
     void load_instruction();
     void parse_gate_defination();
@@ -59,7 +63,7 @@ private:
 
     void classify_measurements();
 
-    void execute_gate(shared_ptr<QuantumState> state, std::shared_ptr<NWQSim::Circuit> circuit, qasm_gate gate);
+    bool execute_gate(shared_ptr<QuantumState> state, std::shared_ptr<NWQSim::Circuit> circuit, qasm_gate gate);
     IdxType *sub_execute(shared_ptr<QuantumState> state, IdxType repetition, bool print_metrics);
 
     void dump_defined_gates();
@@ -69,7 +73,7 @@ private:
 public:
     qasm_parser(const char *filename);
     IdxType num_qubits();
-    map<string, IdxType> *execute(shared_ptr<QuantumState> state, IdxType repetition, bool print_metrics = false);
+    map<string, IdxType> *execute(shared_ptr<QuantumState> state, IdxType repetition, bool print_metrics = false, bool _force_measure = false);
     ~qasm_parser();
 };
 
@@ -146,7 +150,7 @@ qasm_parser::qasm_parser(const char *filename)
 
                     list_gates->push_back(cur_gate);
 
-                    contains_if = true;
+                    dynamic_circuit = true;
                 }
             }
             else
@@ -521,26 +525,41 @@ void qasm_parser::classify_measurements()
         {
             list_gates->at(i).final_measurements = final_measurements;
 
-            if (final_measurements)
-                measure_all = false;
+            if (!final_measurements)
+                dynamic_circuit = true;
         }
         else
-
             final_measurements = false;
 }
 
-map<string, IdxType> *qasm_parser::execute(shared_ptr<QuantumState> state, IdxType repetition, bool print_metrics)
+map<string, IdxType> *qasm_parser::execute(shared_ptr<QuantumState> state, IdxType repetition, bool print_metrics, bool _force_measure)
 {
     IdxType *results;
 
-    if (contains_if)
+    force_measure = _force_measure;
+    if (dynamic_circuit && !force_measure)
     {
+        auto start = std::chrono::steady_clock::now();
+
         results = new IdxType[repetition];
 
         for (IdxType i = 0; i < repetition; i++)
         {
+            // printProgressBar(i, repetition, start);
+
             IdxType *sub_result = sub_execute(state, 1, print_metrics);
-            results[i] = sub_result[0];
+
+            // MID MEASUREMENT
+            if (sub_result == NULL)
+            {
+                results[i] = -measurement_count; // APPEND (-) num measures succeded if didn't finish
+                printf("Trail %d failed at %d measurement\n", i, measurement_count);
+            }
+            else
+            {
+                results[i] = sub_result[0];
+                printf("%dth trail succeeded!\n", i);
+            }
         }
     }
     else
@@ -558,17 +577,18 @@ map<string, IdxType> *qasm_parser::execute(shared_ptr<QuantumState> state, IdxTy
             result_dict.insert({results[i], 1});
     }
 
-    if (measure_all)
-        return to_binary_dictionary(global_qubit_offset, result_dict);
-    else
-        return convert_dictionary(result_dict, list_cregs);
+    return convert_dictionary(result_dict, list_cregs);
 }
 
 IdxType *qasm_parser::sub_execute(shared_ptr<QuantumState> state, IdxType repetition, bool print_metrics)
 {
     state->reset_state();
 
+    measurement_count = 0;
+
     std::shared_ptr<NWQSim::Circuit> circuit = std::make_shared<Circuit>(num_qubits());
+
+    int n_succeed = 0;
 
     for (auto gate : *list_gates)
     {
@@ -584,7 +604,16 @@ IdxType *qasm_parser::sub_execute(shared_ptr<QuantumState> state, IdxType repeti
         }
         else
         {
-            execute_gate(state, circuit, gate);
+            bool proceed = execute_gate(state, circuit, gate);
+
+            if (!proceed)
+            {
+                return NULL;
+            }
+            else
+            {
+                n_succeed++;
+            }
         }
     }
 
@@ -600,7 +629,7 @@ IdxType *qasm_parser::sub_execute(shared_ptr<QuantumState> state, IdxType repeti
     return state->get_results();
 }
 
-void qasm_parser::execute_gate(shared_ptr<QuantumState> state, std::shared_ptr<NWQSim::Circuit> circuit, qasm_gate gate)
+bool qasm_parser::execute_gate(shared_ptr<QuantumState> state, std::shared_ptr<NWQSim::Circuit> circuit, qasm_gate gate)
 {
     auto gate_name = gate.name;
     auto params = gate.params;
@@ -610,17 +639,27 @@ void qasm_parser::execute_gate(shared_ptr<QuantumState> state, std::shared_ptr<N
     {
         if (!gate.final_measurements)
         {
-            if (!circuit->is_empty())
+            if (force_measure)
             {
-                state->sim(circuit);
-                circuit->clear();
+                circuit->M(gate.measured_qubit_index);
             }
+            else
+            {
+                measurement_count++;
 
-            // Measure and update creg value for intermediate measurements
-            IdxType result = state->measure(gate.measured_qubit_index);
+                if (!circuit->is_empty())
+                {
+                    state->sim(circuit);
+                    circuit->clear();
+                }
 
-            list_cregs.at(gate.creg_name).val = modifyBit(list_cregs.at(gate.creg_name).val, gate.creg_index, result);
-            list_cregs.at(gate.creg_name).qubit_indices[gate.creg_index] = UN_DEF;
+                // Measure and update creg value for intermediate measurements
+                IdxType result = state->measure(gate.measured_qubit_index);
+
+                // MID MEASUREMENT
+                if (result != 0)
+                    return false;
+            }
         }
         else
         {
@@ -716,6 +755,9 @@ void qasm_parser::execute_gate(shared_ptr<QuantumState> state, std::shared_ptr<N
         circuit->RZZ(params[0], qubits[0], qubits[1]);
     else
         throw logic_error("Undefined gate is called!");
+
+    // MID MEASUREMENT
+    return true;
 }
 
 qasm_parser::~qasm_parser()

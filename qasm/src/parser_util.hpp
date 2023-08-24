@@ -259,7 +259,16 @@ map<string, IdxType> *convert_dictionary(map<IdxType, IdxType> &counts, map<stri
     {
         auto key = entry.first;
         auto val = entry.second;
-        string converted_key = convert_outcome(key, cregs);
+
+        string converted_key;
+        if (key < 0)
+        {
+            converted_key = std::to_string(key);
+        }
+        else
+        {
+            converted_key = convert_outcome(key, cregs);
+        }
 
         if (converted_key.size() > 0)
         {

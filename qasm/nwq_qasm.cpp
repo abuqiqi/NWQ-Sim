@@ -24,6 +24,7 @@ int main(int argc, char **argv)
     IdxType total_shots = 16384;
     bool run_with_basis = false;
     bool print_metrics = false;
+    bool force_measure = false;
     std::string backend = "CPU";
     std::string simulation_method = "sv";
 
@@ -56,6 +57,8 @@ int main(int argc, char **argv)
                   << "Select the simulation method: sv (state vector, default), dm (density matrix). (default: " << simulation_method << ")." << std::endl;
         std::cout << std::setw(20) << "-basis"
                   << "Run the transpiled benchmark circuits which only contain basis gates." << std::endl;
+        std::cout << std::setw(20) << "-force_measure"
+                  << "Force the mid circuit measurement to be 0, throw an error if not possible to obtian such an outcome." << std::endl;
     }
 
     if (cmdOptionExists(argv, argv + argc, "-shots"))
@@ -72,6 +75,11 @@ int main(int argc, char **argv)
     if (cmdOptionExists(argv, argv + argc, "-metrics"))
     {
         print_metrics = true;
+    }
+
+    if (cmdOptionExists(argv, argv + argc, "-force_measure"))
+    {
+        force_measure = true;
     }
 
     if (cmdOptionExists(argv, argv + argc, "-backend_list"))
@@ -111,28 +119,11 @@ int main(int argc, char **argv)
             return 1;
         }
         state->print_config(simulation_method);
-        map<string, IdxType> *counts = parser.execute(state, total_shots, print_metrics);
-
-        // std::vector<size_t> in_bits;
-
-        // for (int i = 0; i < parser.num_qubits(); ++i)
-        // {
-        //     in_bits.push_back(i);
-        // }
-
-        // ValType exp_val_z = state->get_exp_z(in_bits);
-        // ValType exp_val_z_all = state->get_exp_z();
-        // for (size_t i = 0; i < parser.num_qubits(); ++i)
-        // {
-        //     in_bits[i] = i;
-        // }
+        map<string, IdxType> *counts = parser.execute(state, total_shots, print_metrics, force_measure);
 
         if (state->i_proc == 0)
         {
             print_counts(counts, total_shots);
-            // fflush(stdout);
-            // printf("exp-val-z: %f\n", exp_val_z);
-            // printf("exp-val-z all: %f\n", exp_val_z_all);
         }
 
         delete counts;

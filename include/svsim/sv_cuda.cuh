@@ -121,7 +121,7 @@ namespace NWQSim
         {
             IdxType origional_gates = circuit->num_gates();
 
-            IdxType n_measures = prepare_measure(circuit->get_gates());
+            prepare_measure(circuit->get_gates());
 
             std::vector<SVGate> cpu_vec = fuse_circuit_sv(circuit);
 
@@ -167,8 +167,10 @@ namespace NWQSim
             sim_time = sim_timer.measure();
 
             // Copy the results back to CPU
-            cudaSafeCall(cudaMemcpy(results, results_gpu, n_measures * sizeof(IdxType), cudaMemcpyDeviceToHost));
+            cudaSafeCall(cudaMemcpy(results, results_gpu, n_repetitations * sizeof(IdxType), cudaMemcpyDeviceToHost));
+            cudaSafeCall(cudaMemcpy(probs, probs_gpu, n_mid_measure * sizeof(ValType), cudaMemcpyDeviceToHost));
             cudaCheckError();
+            SAFE_FREE_GPU(sv_gpu);
 
             if (Config::PRINT_SIM_TRACE)
             {
@@ -178,7 +180,20 @@ namespace NWQSim
                        sim_time, gpu_mem / 1024 / 1024, gpu_mem / 1024 / 1024);
                 printf("=====================================\n");
             }
-            SAFE_FREE_GPU(sv_gpu);
+
+            if (n_mid_measure > 0)
+            {
+                ValType succeed_prob = probs[0];
+                printf("Prob[0]: %lf\n", probs[0]);
+
+                for (int i = 1; i < n_mid_measure; i++)
+                {
+                    printf("Prob[%d]: %lf\n", i, probs[i]);
+                    succeed_prob *= probs[i];
+                }
+
+                printf("Total success probability: %lf\n", succeed_prob);
+            }
         }
 
         IdxType *get_results() override
@@ -190,7 +205,9 @@ namespace NWQSim
         {
             std::shared_ptr<Circuit> circuit = std::make_shared<Circuit>(n_qubits);
             circuit->M(qubit);
+            multi_shots = true;
             sim(circuit);
+            multi_shots = false;
             return results[0];
         }
 
@@ -314,6 +331,13 @@ namespace NWQSim
         IdxType *results = NULL;
         IdxType *results_gpu = NULL;
 
+        // MID MEASUREMENT
+        ValType *probs = NULL;
+        ValType *probs_gpu = NULL;
+        IdxType n_repetitations = 0;
+        IdxType n_mid_measure = 0;
+        bool multi_shots = false;
+
         // Random
         std::mt19937 rng;
         std::uniform_real_distribution<ValType> uni_dist;
@@ -332,38 +356,62 @@ namespace NWQSim
             cudaSafeCall(cudaMemcpy(gates_gpu, cpu_vec.data(), vec_size, cudaMemcpyHostToDevice));
         }
 
-        IdxType prepare_measure(std::vector<Gate> gates)
+        void prepare_measure(std::vector<Gate> gates)
         {
             // Determine the total number of measurements
-            IdxType n_slots = 0;
+
+            IdxType ma_slots = 0;
+
             for (auto g : gates)
             {
-                if (g.op_name == OP::M)
-                    n_slots++;
+                if (g.op_name == OP::M && multi_shots)
+                    ma_slots++;
                 else if (g.op_name == OP::MA)
-                    n_slots += g.repetition;
+                    ma_slots = g.repetition;
             }
 
             // Prepare randoms and results memory
             SAFE_FREE_HOST_CUDA(results);
-            SAFE_ALOC_HOST_CUDA(results, sizeof(IdxType) * n_slots);
-            memset(results, 0, sizeof(IdxType) * n_slots);
+            SAFE_ALOC_HOST_CUDA(results, sizeof(IdxType) * ma_slots);
+            memset(results, 0, sizeof(IdxType) * ma_slots);
 
             SAFE_FREE_GPU(results_gpu);
-            SAFE_ALOC_GPU(results_gpu, sizeof(IdxType) * n_slots);
-            cudaSafeCall(cudaMemset(results_gpu, 0, sizeof(IdxType) * n_slots));
+            SAFE_ALOC_GPU(results_gpu, sizeof(IdxType) * ma_slots);
+            cudaSafeCall(cudaMemset(results_gpu, 0, sizeof(IdxType) * ma_slots));
 
             SAFE_FREE_HOST_CUDA(randoms);
-            SAFE_ALOC_HOST_CUDA(randoms, sizeof(ValType) * n_slots);
-            for (IdxType i = 0; i < n_slots; i++)
+            SAFE_ALOC_HOST_CUDA(randoms, sizeof(ValType) * ma_slots);
+            for (IdxType i = 0; i < ma_slots; i++)
                 randoms[i] = uni_dist(rng);
 
             SAFE_FREE_GPU(randoms_gpu);
-            SAFE_ALOC_GPU(randoms_gpu, sizeof(ValType) * n_slots);
+            SAFE_ALOC_GPU(randoms_gpu, sizeof(ValType) * ma_slots);
             cudaSafeCall(cudaMemcpy(randoms_gpu, randoms,
-                                    sizeof(ValType) * n_slots, cudaMemcpyHostToDevice));
+                                    sizeof(ValType) * ma_slots, cudaMemcpyHostToDevice));
+            n_repetitations = ma_slots;
 
-            return n_slots;
+            if (!multi_shots)
+            {
+                IdxType measure_slots = 0;
+                for (auto g : gates)
+                {
+                    if (g.op_name == OP::M)
+                        measure_slots++;
+                }
+
+                SAFE_FREE_HOST_CUDA(probs);
+                SAFE_ALOC_HOST_CUDA(probs, sizeof(ValType) * measure_slots);
+                memset(probs, 0, sizeof(ValType) * measure_slots);
+
+                SAFE_FREE_GPU(probs_gpu);
+                SAFE_ALOC_GPU(probs_gpu, sizeof(ValType) * measure_slots);
+                cudaSafeCall(cudaMemset(probs_gpu, 0, sizeof(ValType) * measure_slots));
+                n_mid_measure = measure_slots;
+            }
+            else
+            {
+                n_mid_measure = 0;
+            }
         }
 
         //================================= Gate Definition ========================================
@@ -456,9 +504,58 @@ namespace NWQSim
             // BARR_CUDA;
         }
 
-        __device__ __inline__ void M_GATE(const IdxType qubit, const IdxType cur_index)
+        __device__ __inline__ void M_GATE_ZERO(const IdxType qubit, const IdxType cur_index)
         {
-            ValType rand = randoms_gpu[cur_index];
+            grid_group grid = this_grid();
+            const IdxType tid = blockDim.x * blockIdx.x + threadIdx.x;
+            // ValType *m_real = m_real;
+            IdxType mask = ((IdxType)1 << qubit);
+
+            for (IdxType i = tid; i < dim; i += blockDim.x * gridDim.x)
+            {
+                if ((i & mask) == 0)
+                    m_real[i] = 0;
+                else
+                    m_real[i] = sv_real[i] * sv_real[i] + sv_imag[i] * sv_imag[i];
+            }
+            BARR_CUDA;
+
+            // Parallel reduction
+            for (IdxType k = ((IdxType)1 << (n_qubits - 1)); k > 0; k >>= 1)
+            {
+                for (IdxType i = tid; i < k; i += blockDim.x * gridDim.x)
+                {
+                    m_real[i] += m_real[i + k];
+                }
+                BARR_CUDA;
+            }
+            ValType prob_of_one = m_real[0];
+            grid.sync();
+
+            // FORCE MEASURE 0
+            assert(prob_of_one < 1);
+            ValType factor = 1. / sqrt(1. - prob_of_one);
+            for (IdxType i = tid; i < dim; i += blockDim.x * gridDim.x)
+            {
+                if ((i & mask) == 0)
+                {
+                    sv_real[i] *= factor;
+                    sv_imag[i] *= factor;
+                }
+                else
+                {
+                    sv_real[i] = 0;
+                    sv_imag[i] = 0;
+                }
+            }
+            if (tid == 0)
+                probs_gpu[cur_index] = 1 - prob_of_one;
+            BARR_CUDA;
+        }
+
+        __device__ __inline__ void M_GATE(const IdxType qubit)
+        {
+            ValType rand = randoms_gpu[0];
 
             grid_group grid = this_grid();
             const IdxType tid = blockDim.x * blockIdx.x + threadIdx.x;
@@ -521,11 +618,11 @@ namespace NWQSim
                 }
             }
             if (tid == 0)
-                results_gpu[cur_index] = (rand <= prob_of_one ? 1 : 0);
+                results_gpu[0] = (rand <= prob_of_one ? 1 : 0);
             BARR_CUDA;
         }
 
-        __device__ __inline__ void MA_GATE(const IdxType repetition, const IdxType cur_index)
+        __device__ __inline__ void MA_GATE(const IdxType repetition)
         {
             grid_group grid = this_grid();
             const IdxType n_size = (IdxType)1 << (n_qubits);
@@ -580,9 +677,9 @@ namespace NWQSim
                 ValType upper = (j + 1 == n_size) ? 1 : LOCAL_G_CUDA(m_real, j + 1);
                 for (IdxType i = 0; i < repetition; i++)
                 {
-                    ValType r = randoms_gpu[cur_index + i];
+                    ValType r = randoms_gpu[i];
                     if (lower <= r && r < upper)
-                        results_gpu[cur_index + i] = j;
+                        results_gpu[i] = j;
                 }
             }
             BARR_CUDA;
@@ -736,13 +833,19 @@ namespace NWQSim
             }
             else if (op_name == OP::M)
             {
-                sv_gpu->M_GATE(qubit, cur_index);
+                if (sv_gpu->multi_shots)
+                {
+                    sv_gpu->M_GATE(qubit);
+                }
+                else
+                {
+                    sv_gpu->M_GATE_ZERO(qubit, cur_index);
+                }
                 cur_index++;
             }
             else if (op_name == OP::MA)
             {
-                sv_gpu->MA_GATE(qubit, cur_index);
-                cur_index += qubit;
+                sv_gpu->MA_GATE(qubit);
             }
             grid.sync();
         }

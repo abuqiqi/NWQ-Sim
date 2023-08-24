@@ -93,6 +93,6 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # Subdirectories
 add_subdirectory(qasm)
 
-if(XACC_FOUND)
-    add_subdirectory(xacc)
-endif()
+# if(XACC_FOUND)
+#     add_subdirectory(xacc)
+# endif()
