@@ -186,11 +186,11 @@ namespace NWQSim
             if (n_mid_measure > 0)
             {
                 ValType succeed_prob = probs[0];
-                printf("Prob[0]: %lf\n", probs[0]);
+                printf("Prob[1]: %lf\n", probs[0]);
 
                 for (int i = 1; i < n_mid_measure; i++)
                 {
-                    printf("Prob[%d]: %lf\n", i, probs[i]);
+                    printf("Prob[%d]: %lf\n", i + 1, probs[i]);
                     succeed_prob *= probs[i];
                 }
 
