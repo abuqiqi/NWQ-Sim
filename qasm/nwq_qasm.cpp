@@ -15,6 +15,8 @@
 #include "nwq_util.hpp"
 /**************************************************************************/
 
+#include "dm_test.hpp"
+
 using namespace NWQSim;
 ValType pass_threshold = 0.98;
 ValType run_brnchmark(std::string backend, IdxType index, IdxType total_shots, std::string simulation_method, bool is_basis);
@@ -131,7 +133,7 @@ int main(int argc, char **argv)
     {
         const char *qasmString = getCmdOption(argv, argv + argc, "-qs");
         qasm_parser parser;
-        parser.load_qasm_string(std::string(qasmString)+";\n");
+        parser.load_qasm_string(std::string(qasmString) + ";\n");
         // Create the backend
         std::shared_ptr<NWQSim::QuantumState> state = BackendManager::create_state(backend, parser.num_qubits(), simulation_method);
         if (!state)
@@ -164,7 +166,7 @@ int main(int argc, char **argv)
         map<string, IdxType> *counts = parser.execute(state, total_shots, print_metrics);
 
         json result_count_json;
-        for (const auto& r : (*counts))
+        for (const auto &r : (*counts))
         {
             result_count_json[(r.first)] = r.second;
         }
@@ -174,16 +176,16 @@ int main(int argc, char **argv)
         state->print_res_state();
         cout << "----------" << endl;
 
-        //if (state->i_proc == 0)
+        // if (state->i_proc == 0)
         //{
-        //print_counts(counts, total_shots);
-        //}
+        // print_counts(counts, total_shots);
+        // }
         delete counts;
     }
 
     if (cmdOptionExists(argv, argv + argc, "-t"))
     {
-        total_shots = 16384; //for verification
+        total_shots = 16384; // for verification
         int benchmark_index = stoi(getCmdOption(argv, argv + argc, "-t"));
         ValType fidelity = run_brnchmark(backend, benchmark_index, total_shots, simulation_method, run_with_basis);
         BackendManager::safe_print("Fidelity between NWQSim and Qiskit Execution: %.4f\n", fidelity);
@@ -205,6 +207,44 @@ int main(int argc, char **argv)
         else
             BackendManager::safe_print("TESTING FAILED!\n");
     }
+
+    if (cmdOptionExists(argv, argv + argc, "-dm_test"))
+    {
+        // NWQSim::Circuit
+        std::shared_ptr<NWQSim::Circuit> circuit = NWQSim::get_custom_circuit();
+
+        // Create the backend
+        std::shared_ptr<NWQSim::QuantumState> state = BackendManager::create_state(backend, circuit->num_qubits(), "dm");
+        if (!state)
+        {
+            std::cerr << "Failed to create backend\n";
+            return 1;
+        }
+        state->sim(circuit);
+
+        NWQSim::post_processing(state->get_state());
+    }
+
+    if (cmdOptionExists(argv, argv + argc, "-dm_test_qasm"))
+    {
+        const char *filename = getCmdOption(argv, argv + argc, "-dm_test_qasm");
+        qasm_parser parser;
+        parser.load_qasm_file(filename);
+
+        // Create the backend
+        std::shared_ptr<NWQSim::QuantumState> state = BackendManager::create_state(backend, parser.num_qubits(), "dm");
+        if (!state)
+        {
+            std::cerr << "Failed to create backend\n";
+            return 1;
+        }
+
+        map<string, IdxType> *counts = parser.execute(state, total_shots, print_metrics);
+
+        post_processing(state->get_state());
+        delete counts;
+    }
+
 // Finalize MPI if necessary
 #ifdef MPI_ENABLED
     if (backend == "MPI" || backend == "NVGPU_MPI")

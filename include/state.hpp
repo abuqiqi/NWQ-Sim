@@ -9,6 +9,8 @@
 #include <stdexcept> // For std::runtime_error
 #include <vector>
 #include <string>
+#include <memory>
+#include <complex>
 
 namespace NWQSim
 {
@@ -54,6 +56,11 @@ namespace NWQSim
         virtual void clear_state()
         {
             throw std::runtime_error("Clear Buffer Not implemented");
+        }
+
+        virtual std::vector<std::complex<ValType>> get_state()
+        {
+            throw std::runtime_error("Get State Not implemented");
         }
 
         void update_config(const std::string &filename)

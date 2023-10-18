@@ -14,6 +14,8 @@
 #include "../private/gate_factory/dm_gates.hpp"
 
 #include <random>
+#include <memory>
+#include <complex>
 #include <cstring>
 #include <algorithm>
 #include <vector>
@@ -159,6 +161,18 @@ namespace NWQSim
                     printf("\n");
             }
             printf("\n");
+        }
+
+        std::vector<std::complex<ValType>> get_state() override
+        {
+            std::vector<std::complex<double>> complexVector;
+            for (IdxType i = 0; i < dim; ++i)
+            {
+                std::complex<double> complexNumber(dm_real[i], dm_imag[i]);
+                complexVector.push_back(complexNumber);
+            }
+
+            return complexVector;
         }
 
     protected:

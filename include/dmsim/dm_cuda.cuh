@@ -244,6 +244,22 @@ namespace NWQSim
             printf("\n");
         }
 
+        std::vector<std::complex<ValType>> get_state() override
+        {
+            cudaSafeCall(cudaMemcpy(dm_real_cpu, dm_real, dm_size, cudaMemcpyDeviceToHost));
+            cudaSafeCall(cudaMemcpy(dm_imag_cpu, dm_imag, dm_size, cudaMemcpyDeviceToHost));
+
+            std::vector<std::complex<double>> complexVector;
+
+            for (IdxType i = 0; i < dim; ++i)
+            {
+                std::complex<double> complexNumber(dm_real_cpu[i], dm_imag_cpu[i]);
+                complexVector.push_back(complexNumber);
+            }
+
+            return complexVector;
+        }
+
     public:
         // n_qubits is the number of qubits
         IdxType n_qubits;
