@@ -8,6 +8,7 @@
 #include <string>
 #include <cstring>
 #include <vector>
+#include <complex>
 
 #include "parser_util.hpp"
 #include "lexer.hpp"
@@ -72,7 +73,7 @@ private:
     void dump_gates();
 
 public:
-    qasm_parser(){}
+    qasm_parser() {}
     void load_qasm_file(const char *filename);
     void load_qasm_string(const std::string qasm_string);
     void load_qobj_file(const char *filename);
@@ -85,7 +86,7 @@ public:
 
 void qasm_parser::parse_qasm()
 {
-    if ((*qasmStreamPtr).fail()) 
+    if ((*qasmStreamPtr).fail())
         throw runtime_error("qasm is not well configured (failed read or failed load)!\n");
     sr.add_replace("pi", "pi", token::e_pi);
     sr.add_replace("sin", "sin", token::e_func);
@@ -172,7 +173,6 @@ void qasm_parser::load_qasm_string(const std::string qasm_string)
     parse_qasm();
 }
 
-
 void qasm_parser::load_instruction()
 {
     bool has_eof = false, has_lcurly = false, has_rcurly = false;
@@ -251,10 +251,9 @@ void qasm_parser::load_instruction()
     }
 }
 
-
 void qasm_parser::parse_qobj()
 {
-    if ((*qobjStreamPtr).fail()) 
+    if ((*qobjStreamPtr).fail())
         throw runtime_error("qobj is not well configured (failed read or failed load)!\n");
     json qobj = json::parse(*qobjStreamPtr);
     list_gates = new vector<qasm_gate>;
@@ -264,7 +263,7 @@ void qasm_parser::parse_qobj()
     for (auto qr : qobj["header"]["qreg_sizes"])
     {
         qreg qreg;
-        qreg.name= qr[0];
+        qreg.name = qr[0];
         qreg.width = qr[1];
         qreg.offset = global_qubit_offset;
         global_qubit_offset += qreg.width;
@@ -281,7 +280,7 @@ void qasm_parser::parse_qobj()
         creg.qubit_indices.insert(creg.qubit_indices.end(), creg.width, UN_DEF);
         list_cregs.insert({creg.name, creg});
     }
-    
+
     //================ CREG ==================
     for (auto is : qobj["instructions"])
     {
@@ -294,14 +293,13 @@ void qasm_parser::parse_qobj()
             gate.name = MEASURE;
             gate.measured_qubit_index = is["qubits"][0];
             IdxType idx = is["memory"][0];
-            //cout << (qobj["header"]["clbit_labels"])[idx][0] << endl;
-            gate.creg_name = (qobj["header"]["clbit_labels"])[idx][0]; 
-            gate.creg_index = (qobj["header"]["clbit_labels"])[idx][1]; 
+            // cout << (qobj["header"]["clbit_labels"])[idx][0] << endl;
+            gate.creg_name = (qobj["header"]["clbit_labels"])[idx][0];
+            gate.creg_index = (qobj["header"]["clbit_labels"])[idx][1];
             list_gates->push_back(gate);
         }
         else if (op == "BARRIER")
         {
-
         }
         else
         {
@@ -315,7 +313,6 @@ void qasm_parser::parse_qobj()
         }
     }
     classify_measurements();
-
 }
 
 void qasm_parser::load_qobj_file(const char *filename)
@@ -329,7 +326,6 @@ void qasm_parser::load_qobj_string(const std::string qobj_string)
     qobjStreamPtr = std::make_unique<std::istringstream>(std::istringstream(qobj_string));
     parse_qobj();
 }
-
 
 void qasm_parser::dump_cur_inst()
 {
@@ -415,6 +411,14 @@ void qasm_parser::parse_gate(vector<token> &inst, vector<qasm_gate> *gates)
                 gates->push_back(cur_gate);
             }
         }
+    }
+    else if (inst[INST_NAME].value == SNAPSHOT)
+    {
+        qasm_gate cur_gate;
+        cur_gate.name = SNAPSHOT;
+        cur_gate.params.push_back(stod(inst[2].value));
+
+        gates->push_back(cur_gate);
     }
     else
     {
@@ -679,14 +683,11 @@ IdxType *qasm_parser::sub_execute(shared_ptr<QuantumState> state, IdxType repeti
         }
     }
 
-    if (!circuit->is_empty())
-    {
-        circuit->MA(repetition);
+    circuit->MA(repetition);
 
-        if (print_metrics)
-            circuit->print_metrics();
-        state->sim(circuit);
-    }
+    if (print_metrics)
+        circuit->print_metrics();
+    state->sim(circuit);
 
     return state->get_results();
 }
@@ -718,6 +719,51 @@ void qasm_parser::execute_gate(shared_ptr<QuantumState> state, std::shared_ptr<N
             // Update creg qubit indices for final measurements
             list_cregs.at(gate.creg_name).qubit_indices[gate.creg_index] = gate.measured_qubit_index;
         }
+    }
+    else if (gate_name == SNAPSHOT)
+    {
+        int snapshot_index = (int)params[0];
+
+        if (!circuit->is_empty())
+        {
+            state->sim(circuit);
+            circuit->clear();
+        }
+        std::vector<std::complex<ValType>> snapshot_state = state->get_state();
+
+        std::stringstream filenameStream;
+        filenameStream << "snapshot_" << snapshot_index << ".bin"; // Constructs filename with index
+        std::string filename = filenameStream.str();
+
+        std::ofstream file(filename, std::ios::binary);
+        if (!file.is_open())
+        {
+            throw std::runtime_error("Failed to open file for writing");
+        }
+        for (const auto &complexNumber : snapshot_state)
+        {
+            double realPart = complexNumber.real();
+            double imagPart = complexNumber.imag();
+            file.write(reinterpret_cast<char *>(&realPart), sizeof(realPart));
+            file.write(reinterpret_cast<char *>(&imagPart), sizeof(imagPart));
+        }
+        file.close();
+    }
+    else if (gate_name == "COLLAPSE")
+    {
+        if (!circuit->is_empty())
+        {
+            state->sim(circuit);
+            circuit->clear();
+        }
+
+        ValType prob = state->collapse_qubit(qubits[0], (IdxType)params[0]);
+
+        for (int i = 1; i < qubits.size(); i++)
+        {
+            prob *= state->collapse_qubit(qubits[i], (IdxType)params[i]);
+        }
+        std::cout << "Collapsed State Probability: " << prob << std::endl;
     }
     else if (gate_name == "U")
         circuit->U(params[0], params[1], params[2], qubits[0]);

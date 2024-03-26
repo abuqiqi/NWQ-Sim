@@ -9,6 +9,7 @@
 #include <stdexcept> // For std::runtime_error
 #include <vector>
 #include <string>
+#include <complex>
 
 namespace NWQSim
 {
@@ -54,6 +55,16 @@ namespace NWQSim
         virtual void clear_state()
         {
             throw std::runtime_error("Clear Buffer Not implemented");
+        }
+
+        virtual ValType collapse_qubit(IdxType qubit, IdxType collapsed_state)
+        {
+            throw std::runtime_error("Collapse Qubit to a State Not implemented");
+        }
+
+        virtual std::vector<std::complex<ValType>> get_state()
+        {
+            throw std::runtime_error("Get State Not implemented");
         }
 
         void update_config(const std::string &filename)

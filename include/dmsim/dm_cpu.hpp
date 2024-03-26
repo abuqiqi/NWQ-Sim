@@ -161,15 +161,49 @@ namespace NWQSim
             }
             */
             printf("----- Real+Imag DM ------\n");
-            for (IdxType i=0; i<num; i++)
+            for (IdxType i = 0; i < num; i++)
             {
-                for (IdxType j=0; j<num; j++)
+                for (IdxType j = 0; j < num; j++)
                 {
-                    printf("%lf+%lfj ", dm_real[i*num+j], dm_imag[i*num+j]);
+                    printf("%lf+%lfj ", dm_real[i * num + j], dm_imag[i * num + j]);
                 }
                 printf("\n");
             }
         }
+
+        ValType collapse_qubit(IdxType qubit, IdxType collapsed_state) override
+        {
+            IdxType mask = ((IdxType)1 << qubit);
+            ValType prob_of_one = 0;
+            for (IdxType i = 0; i < ((IdxType)1 << (n_qubits)); i++)
+            {
+                if ((i & mask) != 0)
+                    prob_of_one += fabs(dm_real[(i << (n_qubits)) + i]);
+            }
+
+            ValType gm_real[16];
+            ValType gm_imag[16];
+            if (collapsed_state == 1)
+                gm_real[15] = 1.0 / prob_of_one;
+            else
+                gm_real[0] = 1.0 / (1.0 - prob_of_one);
+            BARR;
+            C2_GATE(gm_real, gm_imag, qubit, qubit + n_qubits);
+            BARR;
+
+            return collapsed_state == 1 ? prob_of_one : 1.0 - prob_of_one;
+        }
+
+        std::vector<std::complex<ValType>> get_state() override
+        {
+            std::vector<std::complex<ValType>> complexArray;
+            for (int i = 0; i < dim; ++i)
+            {
+                complexArray.push_back(std::complex<ValType>(dm_real[i], dm_imag[i]));
+            }
+            return complexArray;
+        }
+
     protected:
         // n_qubits is the number of qubits
         IdxType n_qubits;
@@ -422,7 +456,7 @@ namespace NWQSim
         void RESET_GATE(const IdxType qubit)
         {
             IdxType mask = ((IdxType)1 << qubit);
-            mask = (mask<<n_qubits) + mask;
+            mask = (mask << n_qubits) + mask;
 
             for (IdxType i = 0; i < dim; i++)
             {

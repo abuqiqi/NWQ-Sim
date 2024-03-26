@@ -15,6 +15,7 @@
 #include <cstring>
 #include <algorithm>
 #include <vector>
+#include <complex>
 
 namespace NWQSim
 {
@@ -150,6 +151,69 @@ namespace NWQSim
                 printf("%lf+%lfj, ", sv_real[i], sv_imag[i]);
             }
             printf("]\n");
+        }
+
+        virtual ValType collapse_qubit(IdxType qubit, IdxType collapsed_state) override
+        {
+
+            IdxType mask = ((IdxType)1 << qubit);
+            ValType prob_of_one = 0;
+
+            for (IdxType i = 0; i < ((IdxType)1 << n_qubits); i++)
+            {
+                if ((i & mask) != 0)
+                    prob_of_one += (sv_real[i] * sv_real[i]) + (sv_imag[i] * sv_imag[i]); // square
+            }
+
+            if (collapsed_state == 1)
+            {
+                ValType normalize_factor = sqrt(prob_of_one);
+
+                for (IdxType i = 0; i < dim; i++)
+                {
+                    if ((i & mask) == 0)
+                    {
+                        sv_real[i] = 0.;
+                        sv_imag[i] = 0.;
+                    }
+                    else
+                    {
+                        sv_real[i] /= normalize_factor;
+                        sv_imag[i] /= normalize_factor;
+                    }
+                }
+            }
+            else
+            {
+                ValType normalize_factor = sqrt(1.0 - prob_of_one);
+
+                for (IdxType i = 0; i < dim; i++)
+                {
+
+                    if ((i & mask) == 0)
+                    {
+                        sv_real[i] /= normalize_factor;
+                        sv_imag[i] /= normalize_factor;
+                    }
+                    else
+                    {
+                        sv_real[i] = 0;
+                        sv_imag[i] = 0;
+                    }
+                }
+            }
+
+            return collapsed_state == 1 ? prob_of_one : 1.0 - prob_of_one;
+        }
+
+        virtual std::vector<std::complex<ValType>> get_state() override
+        {
+            std::vector<std::complex<ValType>> complexArray;
+            for (int i = 0; i < dim; ++i)
+            {
+                complexArray.push_back(std::complex<ValType>(sv_real[i], sv_imag[i]));
+            }
+            return complexArray;
         }
 
     protected:
@@ -387,6 +451,7 @@ namespace NWQSim
                 if ((i & mask) != 0)
                     prob_of_one += (sv_real[i] * sv_real[i]) + (sv_imag[i] * sv_imag[i]); // square
             }
+
             if (rand < prob_of_one)
             {
                 ValType normalize_factor = sqrt(prob_of_one);
@@ -406,9 +471,10 @@ namespace NWQSim
             }
             else
             {
+                ValType normalize_factor = sqrt(1.0 - prob_of_one);
                 for (IdxType i = 0; i < dim; i++)
                 {
-                    ValType normalize_factor = sqrt(1.0 - prob_of_one);
+
                     if ((i & mask) == 0)
                     {
                         sv_real[i] /= normalize_factor;

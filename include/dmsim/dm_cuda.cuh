@@ -219,7 +219,6 @@ namespace NWQSim
 
         ValType get_exp_z(const std::vector<size_t> &in_bits) override
         {
-
             throw std::logic_error("get_exp_z Not implemented (DM_CUDA)");
         }
 
@@ -244,7 +243,7 @@ namespace NWQSim
             printf("\n");
         }
 
-    public:
+        public:
         // n_qubits is the number of qubits
         IdxType n_qubits;
 
@@ -728,6 +727,7 @@ namespace NWQSim
             // BARR_CUDA;
         }
 #endif
+
         __device__ __inline__ void M_GATE(ValType *gm_real, ValType *gm_imag,
                                           const IdxType qubit, const IdxType cur_index)
         {
@@ -836,7 +836,7 @@ namespace NWQSim
             const IdxType per_pe_work_dm = (dim);
 
             IdxType mask = ((IdxType)1 << qubit);
-            mask = (mask<<n_qubits) + mask;
+            mask = (mask << n_qubits) + mask;
 
             for (IdxType i = tid; i < per_pe_work_dm; i += blockDim.x * gridDim.x)
             {
