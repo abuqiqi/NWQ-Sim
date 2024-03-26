@@ -206,18 +206,6 @@ namespace NWQSim
             return complexArray;
         }
 
-        std::vector<std::complex<ValType>> get_state() override
-        {
-            std::vector<std::complex<double>> complexVector;
-            for (IdxType i = 0; i < dim; ++i)
-            {
-                std::complex<double> complexNumber(dm_real[i], dm_imag[i]);
-                complexVector.push_back(complexNumber);
-            }
-
-            return complexVector;
-        }
-
     protected:
         // n_qubits is the number of qubits
         IdxType n_qubits;
