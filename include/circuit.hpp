@@ -42,7 +42,10 @@ namespace NWQSim
         {
             gates = std::make_shared<std::vector<Gate>>(new_gates);
         }
-
+        void set_num_qubits(IdxType _n_qubits)
+        {
+            n_qubits = _n_qubits;
+        }
         void clear()
         {
             // Implementation of clear function
@@ -461,7 +464,6 @@ namespace NWQSim
             Gate G(OP::RZZ, qubit0, qubit1, 2, theta);
             gates->push_back(G);
         }
-
         void SX(IdxType qubit)
         {
             // sqrt(X) gate, basis gate for IBMQ
@@ -471,7 +473,6 @@ namespace NWQSim
             Gate G(OP::SX, qubit);
             gates->push_back(G);
         }
-
         void ID(IdxType qubit)
         {
             // Identity gate
@@ -481,7 +482,6 @@ namespace NWQSim
             Gate G(OP::ID, qubit);
             gates->push_back(G);
         }
-
         void SWAP(IdxType ctrl, IdxType qubit)
         {
             // SWAP gate
@@ -493,7 +493,15 @@ namespace NWQSim
             Gate G(OP::SWAP, qubit, ctrl, 2);
             gates->push_back(G);
         }
-
+        void DELAY(ValType gate_len, IdxType qubit)
+        {
+            // Identity with user-defined delay and relaxation (stored in theta)
+            /** Delay  = [1 0]
+                         [0 1]
+            */
+            Gate G(OP::DELAY, qubit, -1, 1, gate_len);
+            gates->push_back(G);
+        }
         void M(IdxType qubit) // default is pauli-Z
         {
             Gate G(OP::M, qubit);

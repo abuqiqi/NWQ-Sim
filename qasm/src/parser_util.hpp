@@ -53,8 +53,9 @@ string DEFAULT_GATES[] = {
     "CZ", "CX", "CY", "CH",
     "CCX", "CRX", "CRY", "CRZ", "CU", "CU1", "CU3",
     "RESET", "SWAP", "CSWAP",
-    "ID", "RI", "P", "CS", "CSDG", "CT", "CTDG", "CSX", "CP",
-    "RZZ", "RXX", "RYY"};
+    "ID", "DELAY", "RI", "P", "CS", "CSDG", "CT", "CTDG", "CSX", "CP",
+    "RZZ", "RXX", "RYY",
+    "COLLAPSE"};
 
 const string OPENQASM("OPENQASM");
 const string QREG("QREG");
@@ -63,6 +64,7 @@ const string GATE("GATE");
 const string IF("IF");
 const string MEASURE("MEASURE");
 const string BARRIER("BARRIER");
+const string SNAPSHOT("SNAPSHOT");
 
 struct qasm_gate
 {

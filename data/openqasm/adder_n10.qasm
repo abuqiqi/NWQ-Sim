@@ -31,6 +31,8 @@ unmaj a[2],b[3],a[3];
 unmaj a[1],b[2],a[2];
 unmaj a[0],b[1],a[1];
 unmaj cin[0],b[0],a[0];
+collapse(0) b[0];
+snapshot(0);
 measure b[0] -> ans[0];
 measure b[1] -> ans[1];
 measure b[2] -> ans[2];

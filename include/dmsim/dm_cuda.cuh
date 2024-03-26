@@ -219,7 +219,6 @@ namespace NWQSim
 
         ValType get_exp_z(const std::vector<size_t> &in_bits) override
         {
-
             throw std::logic_error("get_exp_z Not implemented (DM_CUDA)");
         }
 
@@ -744,6 +743,7 @@ namespace NWQSim
             // BARR_CUDA;
         }
 #endif
+
         __device__ __inline__ void M_GATE(ValType *gm_real, ValType *gm_imag,
                                           const IdxType qubit, const IdxType cur_index)
         {
@@ -852,55 +852,20 @@ namespace NWQSim
             const IdxType per_pe_work_dm = (dim);
 
             IdxType mask = ((IdxType)1 << qubit);
+            mask = (mask << n_qubits) + mask;
 
-            for (IdxType i = tid; i < ((IdxType)1 << (n_qubits)); i += blockDim.x * gridDim.x)
+            for (IdxType i = tid; i < per_pe_work_dm; i += blockDim.x * gridDim.x)
             {
                 if ((i & mask) == 0)
-                    m_real[i] = 0;
-                else
-                    m_real[i] = abs(LOCAL_G_CUDA(dm_real, (i << (n_qubits)) + i));
-            }
-            grid.sync();
-            for (IdxType k = ((IdxType)1 << (n_qubits - 1)); k > 0; k >>= 1)
-            {
-                for (IdxType i = tid; i < k; i += blockDim.x * gridDim.x)
-                    m_real[i] += m_real[i + k];
-                grid.sync();
-            }
-
-            BARR_CUDA;
-            ValType prob_of_one = m_real[0];
-            grid.sync();
-
-            if (prob_of_one < 1.0) // still possible to normalize
-            {
-                ValType factor = 1.0 / (1.0 - prob_of_one);
-                for (IdxType i = tid; i < per_pe_work_dm; i += blockDim.x * gridDim.x)
                 {
-                    if ((i & mask) == 0)
-                    {
-                        dm_real[i] *= factor;
-                        dm_imag[i] *= factor;
-                    }
-                    else
-                    {
-                        dm_real[i] = 0;
-                        dm_imag[i] = 0;
-                    }
+                    IdxType dual_i = i ^ mask;
+                    dm_real[i] += dm_real[dual_i];
+                    dm_imag[i] += dm_imag[dual_i];
                 }
-            }
-            else
-            {
-                for (IdxType i = tid; i < per_pe_work_dm; i += blockDim.x * gridDim.x)
+                else
                 {
-                    if ((i & mask) == 0)
-                    {
-                        IdxType dual_i = i ^ mask;
-                        dm_real[i] = dm_real[dual_i];
-                        dm_imag[i] = dm_imag[dual_i];
-                        dm_real[dual_i] = 0;
-                        dm_imag[dual_i] = 0;
-                    }
+                    dm_real[i] = 0;
+                    dm_imag[i] = 0;
                 }
             }
             BARR_CUDA;

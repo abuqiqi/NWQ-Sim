@@ -153,6 +153,7 @@ namespace NWQSim
         void print_res_state() override
         {
             IdxType num = ((IdxType)1 << n_qubits);
+            /*
             printf("----- Real DM diag ------\n");
             for (IdxType i = 0; i < num; i++)
             {
@@ -160,7 +161,49 @@ namespace NWQSim
                 if ((i + 1) % 8 == 0)
                     printf("\n");
             }
-            printf("\n");
+            */
+            printf("----- Real+Imag DM ------\n");
+            for (IdxType i = 0; i < num; i++)
+            {
+                for (IdxType j = 0; j < num; j++)
+                {
+                    printf("%lf+%lfj ", dm_real[i * num + j], dm_imag[i * num + j]);
+                }
+                printf("\n");
+            }
+        }
+
+        ValType collapse_qubit(IdxType qubit, IdxType collapsed_state) override
+        {
+            IdxType mask = ((IdxType)1 << qubit);
+            ValType prob_of_one = 0;
+            for (IdxType i = 0; i < ((IdxType)1 << (n_qubits)); i++)
+            {
+                if ((i & mask) != 0)
+                    prob_of_one += fabs(dm_real[(i << (n_qubits)) + i]);
+            }
+
+            ValType gm_real[16];
+            ValType gm_imag[16];
+            if (collapsed_state == 1)
+                gm_real[15] = 1.0 / prob_of_one;
+            else
+                gm_real[0] = 1.0 / (1.0 - prob_of_one);
+            BARR;
+            C2_GATE(gm_real, gm_imag, qubit, qubit + n_qubits);
+            BARR;
+
+            return collapsed_state == 1 ? prob_of_one : 1.0 - prob_of_one;
+        }
+
+        std::vector<std::complex<ValType>> get_state() override
+        {
+            std::vector<std::complex<ValType>> complexArray;
+            for (int i = 0; i < dim; ++i)
+            {
+                complexArray.push_back(std::complex<ValType>(dm_real[i], dm_imag[i]));
+            }
+            return complexArray;
         }
 
         std::vector<std::complex<ValType>> get_state() override
@@ -427,43 +470,20 @@ namespace NWQSim
         void RESET_GATE(const IdxType qubit)
         {
             IdxType mask = ((IdxType)1 << qubit);
-            ValType prob_of_one = 0;
-            for (IdxType i = 0; i < ((IdxType)1 << (n_qubits)); i++)
-            {
-                if ((i & mask) != 0)
-                    prob_of_one += fabs(dm_real[(i << (n_qubits)) + i]);
-            }
-            assert(prob_of_one <= 1.0);
+            mask = (mask << n_qubits) + mask;
 
-            if (prob_of_one < 1.0) // still possible to normalize
+            for (IdxType i = 0; i < dim; i++)
             {
-                ValType factor = 1.0 / (1.0 - prob_of_one);
-                for (IdxType i = 0; i < dim; i++)
+                if ((i & mask) == 0)
                 {
-                    if ((i & mask) == 0)
-                    {
-                        dm_real[i] *= factor;
-                        dm_imag[i] *= factor;
-                    }
-                    else
-                    {
-                        dm_real[i] = 0;
-                        dm_imag[i] = 0;
-                    }
+                    IdxType dual_i = i ^ mask;
+                    dm_real[i] += dm_real[dual_i];
+                    dm_imag[i] += dm_imag[dual_i];
                 }
-            }
-            else
-            {
-                for (IdxType i = 0; i < dim; i++)
+                else
                 {
-                    if ((i & mask) == 0)
-                    {
-                        IdxType dual_i = i ^ mask;
-                        dm_real[i] = dm_real[dual_i];
-                        dm_imag[i] = dm_imag[dual_i];
-                        dm_real[dual_i] = 0;
-                        dm_imag[dual_i] = 0;
-                    }
+                    dm_real[i] = 0;
+                    dm_imag[i] = 0;
                 }
             }
         }

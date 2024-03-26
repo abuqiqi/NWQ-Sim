@@ -31556,3 +31556,5 @@ rz(pi/2) q[1];
 cx q[1],q[0];
 rz(5.7410703) q[0];
 cx q[1],q[0];
+collapse(1) q[0];
+snapshot(0);
