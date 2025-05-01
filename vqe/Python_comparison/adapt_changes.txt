@@ -1,0 +1,316 @@
+----- Result Summary -----
+Method                  : ADAPT-VQE
+Ansatz                  : UCCSD
+No. of Pauli Observables: 197
+Circuit Stats           : 3328 Gates with 14 parameters and 14 operators
+Optimization terminated : Function tolerance reached
+No. of function eval.   : 63
+Evaluation Time         : 0 hrs 0 mins 6.4713 secs
+Final objective value   : -1.9947107462154374
+Final parameters:
+  (7^ 2^ 5 0 ), (6^ 3^ 4 1 ), :: 0.1741195375819586
+  (6^ 2^ 5 1 ), :: -0.3598436504163876
+  (7^ 3^ 4 0 ), :: -0.1222946930721818
+  (7^ 3^ 4 0 ), :: -0.0370847815508774
+  (6^ 3^ 5 0 ), (7^ 2^ 4 1 ), :: 0.1264072639940550
+  (3^ 2^ 1 0 ), (7^ 6^ 5 4 ), :: 0.0677423391690771
+  (6^ 2^ 4 0 ), :: -0.1117449961218322
+  (7^ 3^ 5 1 ), :: -0.0939847483547706
+  (6^ 3^ 5 0 ), (7^ 2^ 4 1 ), :: 0.0174806114910825
+  (7^ 3^ 4 0 ), :: -0.0088112988025765
+  (3^ 1 ), (7^ 5 ), :: -0.0029284281593106
+  (3^ 2^ 1 0 ), (7^ 6^ 5 4 ), :: 0.0013901822125442
+  (7^ 3^ 5 1 ), :: -0.0009709828764955
+  (7^ 3^ 4 0 ), :: -0.0000192057071413
+
+
+
+----- Result Summary -----
+Method                  : ADAPT-VQE
+Ansatz                  : UCCSD
+No. of Pauli Observables: 1031
+Circuit Stats           : 13062 Gates with 41 parameters and 41 operators
+Optimization terminated : Maximum number of evaluations reached
+No. of function eval.   : 200
+Evaluation Time         : 0 hrs 21 mins 30.7799 secs
+Final objective value   : -2.8794664869912689
+Final parameters:
+  (11^ 3^ 8 0 ), (9^ 5^ 6 2 ), :: 0.1801169316919706
+  (10^ 3^ 8 1 ), (9^ 4^ 7 2 ), :: -0.2034257448460398
+  (11^ 4^ 7 0 ), (10^ 5^ 6 1 ), :: 0.1493313154602054
+  (9^ 3^ 8 2 ), :: -0.3945650081364607
+  (10^ 4^ 7 1 ), :: -0.2467496092313114
+  (11^ 5^ 6 0 ), :: -0.2068305175694012
+  (10^ 5^ 7 0 ), (11^ 4^ 6 1 ), :: 0.1204778070889936
+  (9^ 5^ 8 0 ), (11^ 3^ 6 2 ), :: 0.1615929002034968
+  (9^ 4^ 8 1 ), (10^ 3^ 7 2 ), :: -0.2004846063436882
+  (5^ 3^ 2 0 ), (11^ 9^ 8 6 ), :: 0.0887029232194166
+  (5^ 4^ 1 0 ), (11^ 10^ 7 6 ), :: 0.0441324527273750
+  (4^ 3^ 2 1 ), (10^ 9^ 8 7 ), :: -0.0802604042684771
+  (11^ 4^ 8 1 ), (10^ 5^ 7 2 ), :: -0.0868780123520872
+  (10^ 3^ 7 0 ), (9^ 4^ 6 1 ), :: 0.0908552180796764
+  (11^ 3^ 7 1 ), (9^ 5^ 7 1 ), :: -0.1123567608488562
+  (10^ 4^ 8 0 ), (10^ 4^ 6 2 ), :: 0.1130277392095249
+  (10^ 4^ 6 0 ), :: -0.0980544894140378
+  (11^ 5^ 7 1 ), :: -0.0924964413654642
+  (11^ 3^ 6 0 ), (9^ 5^ 6 0 ), :: 0.0529975184412389
+  (11^ 5^ 8 0 ), (11^ 5^ 6 2 ), :: -0.0454964494664773
+  (10^ 4^ 8 2 ), :: -0.1609139796241972
+  (9^ 3^ 7 1 ), :: -0.1680844187723168
+  (9^ 3^ 6 0 ), :: -0.1090452481903847
+  (11^ 5^ 8 2 ), :: -0.0977967836244127
+  (9^ 4^ 7 0 ), (10^ 3^ 6 1 ), :: 0.0709453353601744
+  (10^ 5^ 8 1 ), (11^ 4^ 7 2 ), :: -0.0704539948212382
+  (9^ 3^ 8 0 ), (9^ 3^ 6 2 ), :: -0.0520142255185075
+  (11^ 3^ 8 2 ), (9^ 5^ 8 2 ), :: 0.0479378326401572
+  (3^ 1 ), (9^ 7 ), :: 0.0510037418152269
+  (4^ 2 ), (10^ 8 ), :: -0.0449109663865954
+  (4^ 3^ 1 0 ), (10^ 9^ 7 6 ), :: 0.0315230498100545
+  (5^ 4^ 2 1 ), (11^ 10^ 8 7 ), :: -0.0304174431736996
+  (11^ 3^ 8 2 ), (9^ 5^ 8 2 ), :: -0.0054031302414027
+  (4^ 0 ), (10^ 6 ), :: -0.0091852488413680
+  (5^ 1 ), (11^ 7 ), :: -0.0033755885543882
+  (5^ 1 ), (11^ 7 ), :: -0.0047480870700448
+  (10^ 5^ 7 0 ), (11^ 4^ 6 1 ), :: 0.0007646787582018
+  (5^ 1 ), (11^ 7 ), :: -0.0027009875910490
+  (11^ 4^ 7 0 ), (10^ 5^ 6 1 ), :: -0.0027848712064766
+  (11^ 4^ 7 0 ), (10^ 5^ 6 1 ), :: -0.0005544638369547
+  (11^ 4^ 8 1 ), (10^ 5^ 7 2 ), :: 0.0001252846009344
+
+
+
+----- Result Summary -----
+Method                  : VQE
+Ansatz                  : UCCSD
+No. of Pauli Observables: 1031
+Circuit Stats           : 20898 Gates with 63 parameters and 117 operators
+Optimization terminated : Function tolerance reached
+No. of function eval.   : 931
+Evaluation Time         : 0 hrs 1 mins 59.3964 secs
+Final objective value   : -2.8767433344008571
+Final parameters:
+  3^ 0 :: 0.0000663133096134
+  9^ 6 :: 0.0000663133096134
+  4^ 0 :: 0.0009139499854868
+  10^ 6 :: 0.0009139499854868
+  5^ 0 :: 0.0000109526952165
+  11^ 6 :: 0.0000109526952165
+  3^ 1 :: 0.0099041184781948
+  9^ 7 :: 0.0099041184781948
+  4^ 1 :: 0.0000028899972733
+  10^ 7 :: 0.0000028899972733
+  5^ 1 :: 0.0020180533445934
+  11^ 7 :: 0.0020180533445934
+  3^ 2 :: -0.0000084835517115
+  9^ 8 :: -0.0000084835517115
+  4^ 2 :: -0.0058421008658776
+  10^ 8 :: -0.0058421008658776
+  5^ 2 :: 0.0000058760127555
+  11^ 8 :: 0.0000058760127555
+  4^ 3^ 1 0 :: 0.0191657054581525
+  10^ 9^ 7 6 :: 0.0191657054581525
+  5^ 3^ 1 0 :: 0.0000569834682021
+  11^ 9^ 7 6 :: 0.0000569834682021
+  4^ 3^ 2 0 :: 0.0000457449403460
+  10^ 9^ 8 6 :: 0.0000457449403460
+  5^ 3^ 2 0 :: 0.0630689441940955
+  11^ 9^ 8 6 :: 0.0630689441940955
+  5^ 4^ 1 0 :: 0.0460806492896466
+  11^ 10^ 7 6 :: 0.0460806492896466
+  5^ 4^ 2 0 :: 0.0000403090178099
+  11^ 10^ 8 6 :: 0.0000403090178099
+  4^ 3^ 2 1 :: -0.0509337251050494
+  10^ 9^ 8 7 :: -0.0509337251050494
+  5^ 3^ 2 1 :: -0.0000356137802074
+  11^ 9^ 8 7 :: -0.0000356137802074
+  5^ 4^ 2 1 :: -0.0169102916969094
+  11^ 10^ 8 7 :: -0.0169102916969094
+  9^ 3^ 6 0 :: -0.0789919129539844
+  10^ 3^ 6 0 :: 0.0000264097512660
+  9^ 4^ 6 0 :: 0.0000264097512660
+  11^ 3^ 6 0 :: 0.0395015868237380
+  9^ 5^ 6 0 :: 0.0395015868237380
+  9^ 3^ 7 0 :: -0.0000369360916271
+  9^ 3^ 6 1 :: -0.0000369360916271
+  10^ 3^ 7 0 :: 0.0669148943508406
+  9^ 4^ 6 1 :: 0.0669148943508406
+  11^ 3^ 7 0 :: -0.0000285567968724
+  9^ 5^ 6 1 :: -0.0000285567968724
+  9^ 3^ 8 0 :: -0.0285123921556705
+  9^ 3^ 6 2 :: -0.0285123921556705
+  10^ 3^ 8 0 :: -0.0000334591412032
+  9^ 4^ 6 2 :: -0.0000334591412032
+  11^ 3^ 8 0 :: 0.1819373020280852
+  9^ 5^ 6 2 :: 0.1819373020280852
+  10^ 4^ 6 0 :: -0.0790537070545044
+  11^ 4^ 6 0 :: -0.0000130347679821
+  10^ 5^ 6 0 :: -0.0000130347679821
+  9^ 4^ 7 0 :: 0.0459728964919724
+  10^ 3^ 6 1 :: 0.0459728964919724
+  10^ 4^ 7 0 :: 0.0000262904346247
+  10^ 4^ 6 1 :: 0.0000262904346247
+  11^ 4^ 7 0 :: 0.1460119976066984
+  10^ 5^ 6 1 :: 0.1460119976066984
+  9^ 4^ 8 0 :: 0.0000329910115266
+  10^ 3^ 6 2 :: 0.0000329910115266
+  10^ 4^ 8 0 :: 0.0698754503691547
+  10^ 4^ 6 2 :: 0.0698754503691547
+  11^ 4^ 8 0 :: -0.0000580592698345
+  10^ 5^ 6 2 :: -0.0000580592698345
+  11^ 5^ 6 0 :: -0.2389101207255367
+  9^ 5^ 7 0 :: 0.0000265868375120
+  11^ 3^ 6 1 :: 0.0000265868375120
+  10^ 5^ 7 0 :: 0.1212722337529075
+  11^ 4^ 6 1 :: 0.1212722337529075
+  11^ 5^ 7 0 :: 0.0000139899113419
+  11^ 5^ 6 1 :: 0.0000139899113419
+  9^ 5^ 8 0 :: 0.1275966382846275
+  11^ 3^ 6 2 :: 0.1275966382846275
+  10^ 5^ 8 0 :: 0.0000298155186337
+  11^ 4^ 6 2 :: 0.0000298155186337
+  11^ 5^ 8 0 :: -0.0327102875085794
+  11^ 5^ 6 2 :: -0.0327102875085794
+  9^ 3^ 7 1 :: -0.1225676870336746
+  10^ 3^ 7 1 :: 0.0000101997580818
+  9^ 4^ 7 1 :: 0.0000101997580818
+  11^ 3^ 7 1 :: -0.0747137109997610
+  9^ 5^ 7 1 :: -0.0747137109997610
+  9^ 3^ 8 1 :: -0.0000000044903463
+  9^ 3^ 7 2 :: -0.0000000044903463
+  10^ 3^ 8 1 :: -0.2085245702485516
+  9^ 4^ 7 2 :: -0.2085245702485516
+  11^ 3^ 8 1 :: 0.0000264680094256
+  9^ 5^ 7 2 :: 0.0000264680094256
+  10^ 4^ 7 1 :: -0.2818164675840179
+  11^ 4^ 7 1 :: -0.0000085072117096
+  10^ 5^ 7 1 :: -0.0000085072117096
+  9^ 4^ 8 1 :: -0.1696021117676615
+  10^ 3^ 7 2 :: -0.1696021117676615
+  10^ 4^ 8 1 :: 0.0000147849688129
+  10^ 4^ 7 2 :: 0.0000147849688129
+  11^ 4^ 8 1 :: -0.0662424761044038
+  10^ 5^ 7 2 :: -0.0662424761044038
+  11^ 5^ 7 1 :: -0.0760237396850309
+  9^ 5^ 8 1 :: -0.0000425475755162
+  11^ 3^ 7 2 :: -0.0000425475755162
+  10^ 5^ 8 1 :: -0.0419573121924833
+  11^ 4^ 7 2 :: -0.0419573121924833
+  11^ 5^ 8 1 :: 0.0000439214304357
+  11^ 5^ 7 2 :: 0.0000439214304357
+  9^ 3^ 8 2 :: -0.4406052246878710
+  10^ 3^ 8 2 :: 0.0000177169950344
+  9^ 4^ 8 2 :: 0.0000177169950344
+  11^ 3^ 8 2 :: 0.0311443805110892
+  9^ 5^ 8 2 :: 0.0311443805110892
+  10^ 4^ 8 2 :: -0.1210490260566617
+  11^ 4^ 8 2 :: 0.0000404254620123
+  10^ 5^ 8 2 :: 0.0000404254620123
+  11^ 5^ 8 2 :: -0.0683730005474320
+
+
+
+
+  ADAPT Iteration 0, Fval = -2.52636
+	Selected Operator: (4^ 10^ 7 1 ),, Current gradient norm = 0.66934
+ADAPT Iteration 1, Fval = -2.53199
+	Selected Operator: (10^ 9^ 8 7 ), (4^ 3^ 2 1 ), (4^ 9^ 8 1 ), (4^ 9^ 2 7 ), Current gradient norm = 0.571299
+ADAPT Iteration 2, Fval = -2.57652
+	Selected Operator: (3^ 9^ 8 2 ),, Current gradient norm = 0.516282
+ADAPT Iteration 3, Fval = -2.58737
+	Selected Operator: (11^ 9^ 8 6 ), (5^ 3^ 2 0 ), (5^ 9^ 8 0 ), (5^ 9^ 2 6 ), Current gradient norm = 0.450401
+ADAPT Iteration 4, Fval = -2.6007
+	Selected Operator: (5^ 11^ 6 0 ),, Current gradient norm = 0.344217
+ADAPT Iteration 5, Fval = -2.60413
+	Selected Operator: (11^ 10^ 7 6 ), (5^ 4^ 1 0 ), (5^ 10^ 7 0 ), (5^ 10^ 1 6 ), Current gradient norm = 0.288389
+ADAPT Iteration 6, Fval = -2.60589
+	Selected Operator: (3^ 11^ 6 0 ), (5^ 9^ 6 0 ),, Current gradient norm = 0.20215
+ADAPT Iteration 7, Fval = -2.60834
+	Selected Operator: (5^ 11^ 6 2 ), (5^ 11^ 8 0 ),, Current gradient norm = 0.185587
+ADAPT Iteration 8, Fval = -2.60999
+	Selected Operator: (4^ 2 ), (10^ 8 ), Current gradient norm = 0.148265
+ADAPT Iteration 9, Fval = -2.61356
+	Selected Operator: (3^ 1 ), (9^ 7 ), Current gradient norm = 0.153774
+ADAPT Iteration 10, Fval = -2.62003
+	Selected Operator: (3^ 1 ), (9^ 7 ), Current gradient norm = 0.138445
+ADAPT Iteration 11, Fval = -2.6242
+	Selected Operator: (4^ 2 ), (10^ 8 ), Current gradient norm = 0.114179
+ADAPT Iteration 12, Fval = -2.62616
+	Selected Operator: (5^ 11^ 7 1 ),, Current gradient norm = 0.0873316
+ADAPT Iteration 13, Fval = -2.62731
+	Selected Operator: (11^ 10^ 7 6 ), (5^ 4^ 1 0 ), (5^ 10^ 7 0 ), (5^ 10^ 1 6 ), Current gradient norm = 0.108614
+ADAPT Iteration 14, Fval = -2.6293
+	Selected Operator: (3^ 9^ 6 2 ), (3^ 9^ 8 0 ),, Current gradient norm = 0.0939206
+ADAPT Iteration 15, Fval = -2.63055
+	Selected Operator: (3^ 11^ 8 2 ), (5^ 9^ 8 2 ),, Current gradient norm = 0.117904
+ADAPT Iteration 16, Fval = -2.63204
+	Selected Operator: (10^ 9^ 8 7 ), (4^ 3^ 2 1 ), (4^ 9^ 8 1 ), (4^ 9^ 2 7 ), Current gradient norm = 0.106638
+ADAPT Iteration 17, Fval = -2.63488
+	Selected Operator: (11^ 10^ 7 6 ), (5^ 4^ 1 0 ), (5^ 10^ 7 0 ), (5^ 10^ 1 6 ), Current gradient norm = 0.117445
+ADAPT Iteration 18, Fval = -2.63649
+	Selected Operator: (11^ 10^ 7 6 ), (5^ 4^ 1 0 ), (5^ 10^ 7 0 ), (5^ 10^ 1 6 ), Current gradient norm = 0.11426
+ADAPT Iteration 19, Fval = -2.63959
+	Selected Operator: (3^ 1 ), (9^ 7 ), Current gradient norm = 0.103353
+ADAPT Iteration 20, Fval = -2.64046
+	Selected Operator: (11^ 10^ 8 7 ), (5^ 4^ 2 1 ), (5^ 10^ 8 1 ), (5^ 10^ 2 7 ), Current gradient norm = 0.101489
+ADAPT Iteration 21, Fval = -2.64214
+	Selected Operator: (11^ 9^ 8 6 ), (5^ 3^ 2 0 ), (5^ 9^ 8 0 ), (5^ 9^ 2 6 ), Current gradient norm = 0.100047
+ADAPT Iteration 22, Fval = -2.64563
+	Selected Operator: (3^ 1 ), (9^ 7 ), Current gradient norm = 0.0820969
+ADAPT Iteration 23, Fval = -2.64578
+	Selected Operator: (3^ 11^ 7 1 ), (5^ 9^ 7 1 ),, Current gradient norm = 0.106614
+ADAPT Iteration 24, Fval = -2.64801
+	Selected Operator: (4^ 2 ), (10^ 8 ), Current gradient norm = 0.120236
+ADAPT Iteration 25, Fval = -2.64937
+	Selected Operator: (11^ 10^ 8 7 ), (5^ 4^ 2 1 ), (5^ 10^ 8 1 ), (5^ 10^ 2 7 ), Current gradient norm = 0.121673
+ADAPT Iteration 26, Fval = -2.65143
+	Selected Operator: (10^ 9^ 7 6 ), (4^ 3^ 1 0 ), (4^ 9^ 7 0 ), (4^ 9^ 1 6 ), Current gradient norm = 0.115105
+ADAPT Iteration 27, Fval = -2.65382
+	Selected Operator: (3^ 9^ 8 2 ),, Current gradient norm = 0.0972518
+ADAPT Iteration 28, Fval = -2.65535
+	Selected Operator: (5^ 11^ 6 2 ), (5^ 11^ 8 0 ),, Current gradient norm = 0.110624
+ADAPT Iteration 29, Fval = -2.65603
+	Selected Operator: (11^ 10^ 7 6 ), (5^ 4^ 1 0 ), (5^ 10^ 7 0 ), (5^ 10^ 1 6 ), Current gradient norm = 0.11504
+ADAPT Iteration 30, Fval = -2.65708
+	Selected Operator: (5^ 1 ), (11^ 7 ), Current gradient norm = 0.105178
+ADAPT Iteration 31, Fval = -2.65951
+	Selected Operator: (3^ 9^ 8 2 ),, Current gradient norm = 0.0949561
+ADAPT Iteration 32, Fval = -2.66055
+	Selected Operator: (4^ 10^ 7 1 ),, Current gradient norm = 0.116134
+ADAPT Iteration 33, Fval = -2.6613
+	Selected Operator: (4^ 10^ 6 2 ), (4^ 10^ 8 0 ),, Current gradient norm = 0.113993
+ADAPT Iteration 34, Fval = -2.66253
+	Selected Operator: (4^ 10^ 6 2 ), (4^ 10^ 8 0 ),, Current gradient norm = 0.0956938
+ADAPT Iteration 35, Fval = -2.66426
+	Selected Operator: (11^ 9^ 8 6 ), (5^ 3^ 2 0 ), (5^ 9^ 8 0 ), (5^ 9^ 2 6 ), Current gradient norm = 0.0952519
+ADAPT Iteration 36, Fval = -2.6652
+	Selected Operator: (11^ 9^ 8 6 ), (5^ 3^ 2 0 ), (5^ 9^ 8 0 ), (5^ 9^ 2 6 ), Current gradient norm = 0.0829863
+ADAPT Iteration 37, Fval = -2.66659
+	Selected Operator: (4^ 0 ), (10^ 6 ), Current gradient norm = 0.0931113
+ADAPT Iteration 38, Fval = -2.66664
+	Selected Operator: (4^ 0 ), (10^ 6 ), Current gradient norm = 0.0728945
+ADAPT Iteration 39, Fval = -2.66799
+	Selected Operator: (4^ 0 ), (10^ 6 ), Current gradient norm = 0.0712835
+ADAPT Iteration 40, Fval = -2.66809
+	Selected Operator: (5^ 11^ 6 0 ),, Current gradient norm = 0.0763878
+ADAPT Iteration 41, Fval = -2.66816
+	Selected Operator: (5^ 11^ 6 0 ),, Current gradient norm = 0.0749642
+ADAPT Iteration 42, Fval = -2.67011
+	Selected Operator: (4^ 0 ), (10^ 6 ), Current gradient norm = 0.0702713
+ADAPT Iteration 43, Fval = -2.67216
+	Selected Operator: (10^ 9^ 8 7 ), (4^ 3^ 2 1 ), (4^ 9^ 8 1 ), (4^ 9^ 2 7 ), Current gradient norm = 0.0864999
+ADAPT Iteration 44, Fval = -2.67559
+	Selected Operator: (5^ 11^ 6 0 ),, Current gradient norm = 0.0870033
+ADAPT Iteration 45, Fval = -2.67663
+	Selected Operator: (10^ 9^ 8 7 ), (4^ 3^ 2 1 ), (4^ 9^ 8 1 ), (4^ 9^ 2 7 ), Current gradient norm = 0.122173
+ADAPT Iteration 46, Fval = -2.6788
+	Selected Operator: (11^ 10^ 8 7 ), (5^ 4^ 2 1 ), (5^ 10^ 8 1 ), (5^ 10^ 2 7 ), Current gradient norm = 0.0896022
+ADAPT Iteration 47, Fval = -2.6807
+	Selected Operator: (3^ 1 ), (9^ 7 ), Current gradient norm = 0.093366
+ADAPT Iteration 48, Fval = -2.6811
+	Selected Operator: (5^ 11^ 6 0 ),, Current gradient norm = 0.0985966
+ADAPT Iteration 49, Fval = -2.68159
+	Selected Operator: (11^ 10^ 8 7 ), (5^ 4^ 2 1 ), (5^ 10^ 8 1 ), (5^ 10^ 2 7 ), Current gradient norm = 0.0864399
+ADAPT Iteration 50, Fval = -2.68169
+	Selected Operator: (3^ 1 ), (9^ 7 ), Current gradient norm = 0.0927531
+ADAPT Iteration 51, Fval = -2.68203
+	Selected Operator: (11^ 10^ 7 6 ), (5^ 4^ 1 0 ), (5^ 10^ 7 0 ), (5^ 10^ 1 6 ), Current gradient norm = 0.10496

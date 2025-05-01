@@ -408,6 +408,23 @@ int main(int argc, char** argv) {
                                                                                                params.xacc);
   NWQSim::safe_print("Constructed %lld Pauli observables\n", hamil->num_ops());
   NWQSim::safe_print("Constructing the ansatz...\n");
+
+
+  if (params.verbose) {
+      int total_size = 0;
+      const std::vector<std::vector<NWQSim::VQE::PauliOperator> > & pauli_ops = hamil->getPauliOperators();
+      NWQSim::safe_print("\n----- QWC Clique Grouping -----\n");
+      NWQSim::safe_print("Total number of QWC cliques: %zu\n", pauli_ops.size());
+      for (size_t i = 0; i < pauli_ops.size(); i++) {
+          NWQSim::safe_print("Clique %zu (size: %zu):\n", i, pauli_ops[i].size());
+          for (const auto& op : pauli_ops[i]) {
+              NWQSim::safe_print("  %s (coeff: %.6f)\n", op.pauliToString().c_str(), op.getCoeff().real());
+          }
+          total_size += pauli_ops[i].size();
+      }
+      NWQSim::safe_print("\n");
+      NWQSim::safe_print("Total number of Pauli operators: %d\n", total_size);
+  }
   
   // Build the parameterized ansatz
   std::shared_ptr<NWQSim::VQE::Ansatz> ansatz;

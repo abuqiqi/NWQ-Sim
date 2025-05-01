@@ -1,0 +1,108 @@
+// In ./NWQSim/build
+cmake .. -DCMAKE_BUILD_TYPE=Release && make -j4 && clear
+
+
+
+// QFlow with UCCSD and Symmetry level 2 (0 lowest, 2 highest)
+./vqe/nwq_qflow -f ./H622.hamil -n 6 --optimizer LN_NEWUOA --xacc --verbose --abstol 1e-10 --maxeval 4000 --lbound -0.9 --ubound 0.9 --symm 2
+
+// QFlow with Singlet and Triplet excitations
+./vqe/nwq_qflow -f ./H622.hamil -n 6 --optimizer LN_NEWUOA --xacc --verbose --abstol 1e-10 --maxeval 30000 --lbound -3.1415 --ubound 3.1415 --gsd > h622_qflow_gsd.txt
+
+// ADAPT-VQE with UCCSD ansatz pool
+// [-0.9, 0.9] bound is used in the existing record
+./vqe/nwq_vqe -f ./H622.hamil -n 6 --abstol 1e-10 --maxeval 4000 --lbound -3.1415 --ubound 3.1415 --adapt --adapt-gradtol 2e-3 --adapt-fvaltol -1 > h622_adavqe_uccsd.txt
+
+// ADAPT-VQE with singlet and triplet ansatz pool
+mpirun -n 4 ./vqe/nwq_vqe -f ./H622.hamil --nparticles 6 --backend MPI --abstol 1e-10 --maxeval 16000 --lbound -3.1415 --ubound 3.1415 --gsd --adapt --adapt-gradtol 2e-3 --adapt-fvaltol -1 > h622_adavqe_gsd.txt
+
+
+
+// LiH, Li-H = 3.4 Angstroms
+// QFlow with UCCSD and Symmetry level 2 (0 lowest, 2 highest)
+mpirun -n 4 ./vqe/nwq_qflow --hamiltonian ./LiH34.hamil --nparticles 4 --backend MPI --optimizer LN_NEWUOA --xacc --verbose --abstol 1e-10 --maxeval 4000 --lbound -0.9 --ubound 0.9 --symm 2 > lih34_qflow_uccsdsym2.txt
+
+// QFlow with Singlet and Triplet excitations
+mpirun -n 4 ./vqe/nwq_qflow -f ./LiH34.hamil --nparticles 4 --backend MPI --optimizer LN_NEWUOA --xacc --verbose --abstol 1e-10 --maxeval 30000 --lbound -3.1415 --ubound 3.1415 --gsd > lih34_qflow_gsd.txt
+
+// ADAPT-VQE with UCCSD ansatz pool
+mpirun -n 4 ./vqe/nwq_vqe -f ./LiH34.hamil --nparticles 4 --backend MPI --abstol 1e-10 --maxeval 4000 --lbound -0.9 --ubound 0.9 --adapt --adapt-fvaltol -1 > lih34_adavqe_uccsd.txt
+
+// ADAPT-VQE with singlet and triplet ansatz pool
+mpirun -n 4 ./vqe/nwq_vqe -f ./LiH34.hamil --nparticles 4 --backend MPI --abstol 1e-10 --maxeval 16000 --lbound -0.9 --ubound 0.9 --gsd --adapt --adapt-fvaltol -1 > lih34_adavqe_gsd.txt
+
+
+./vqe/nwq_vqe -f ./LiH34.hamil --nparticles 4 --abstol 1e-10 --maxeval 16000 --lbound -0.9 --ubound 0.9 --gsd --adapt --adapt-fvaltol -1 > lih34_adavqe_gsd.txt
+
+
+
+
+
+./vqe/nwq_qflow -f ./H415.hamil -n 4 --optimizer LN_NEWUOA --xacc --verbose --abstol 1e-10 --maxeval 4000 --lbound -0.9 --ubound 0.9 --symm 2
+
+
+
+./vqe/nwq_vqe -f ./H415.hamil -n 4 --abstol 1e-10 --maxeval 4000 --lbound -0.9 --ubound 0.9 --adapt --adapt-fvaltol -1
+
+
+
+
+
+mpirun -n 4 ./vqe/nwq_vqe -f ./H415.hamil --nparticles 4 --backend MPI --abstol 1e-10 --maxeval 4000 --lbound -0.9 --ubound 0.9 --adapt --adapt-fvaltol -1
+
+./vqe/nwq_vqe -f ./H415.hamil -n 4 --abstol 1e-10 --maxeval 4000 --lbound -0.9 --ubound 0.9 --adapt --adapt-fvaltol -1
+
+
+
+
+mpirun -n 4 ./vqe/nwq_qflow -f ./LiH34.hamil --nparticles 4 --backend MPI --optimizer LN_NEWUOA --xacc --verbose --abstol 1e-10 --maxeval 4000 --lbound -0.9 --ubound 0.9 --symm 2 > lih34_qflow_uccsdsym2.txt
+mpirun -n 4 ./vqe/nwq_qflow -f ./LiH34.hamil --nparticles 4 --backend MPI --optimizer LN_NEWUOA --xacc --verbose --abstol 1e-10 --maxeval 4000 --lbound -0.9 --ubound 0.9 --symm 0 > lih34_qflow_uccsdsym0.txt
+mpirun -n 4 ./vqe/nwq_qflow -f ./LiH34.hamil --nparticles 4 --backend MPI --optimizer LN_NEWUOA --xacc --verbose --abstol 1e-10 --maxeval 4000 --lbound -0.9 --ubound 0.9 --symm 4 --origin > lih34_qflow_uccsdorigin.txt
+mpirun -n 4 ./vqe/nwq_vqe -f ./LiH34.hamil --nparticles 4 --backend MPI --abstol 1e-10 --maxeval 4000 --lbound -0.9 --ubound 0.9 --adapt --adapt-fvaltol -1 > lih34_adavqe_uccsd.txt
+
+mpirun -n 4 ./vqe/nwq_qflow -f ./LiH34.hamil --nparticles 4 --backend MPI --optimizer LN_NEWUOA --xacc --verbose --abstol 1e-10 --maxeval 20000 --lbound -0.9 --ubound 0.9 --gsd> lih34_qflow_gsd.txt
+mpirun -n 4 ./vqe/nwq_vqe -f ./LiH34.hamil --nparticles 4 --backend MPI --abstol 1e-10 --maxeval 16000 --lbound -0.9 --ubound 0.9 --gsd --adapt --adapt-fvaltol -1 > lih34_adavqe_gsd.txt
+
+
+
+mpirun -n 4 ./vqe/nwq_qflow -f ./LiH34.hamil --nparticles 4 --backend MPI --optimizer LN_NEWUOA --xacc --verbose --abstol 1e-10 --maxeval 20000  --lbound -0.9 --ubound 0.9 --gsd > lih34_qflow_gsd.txt
+
+mpirun -n 4 ./vqe/nwq_vqe -f ./LiH34.hamil --nparticles 4 --backend MPI --abstol 1e-10 --maxeval 16000 --gsd --adapt --adapt-fvaltol -1 > lih34_adavqe_gsd.txt
+
+mpirun -n 4 ./vqe/nwq_vqe -f ./LiH34.hamil -p 4 --backend MPI --abstol 1e-10 --maxeval 16000 --gsd --adapt --adapt-fvaltol -1   --lbound -100 --ubound 100 > lih34_adavqe_gsd.txt
+
+
+./vqe/nwq_vqe -f ./LiH34.hamil --nparticles 4 --abstol 1e-10 --maxeval 16000 --gsd --adapt --adapt-fvaltol -1 --lbound -6.28 --ubound 6.28 > lih34_adavqe_gsd_single.txt
+
+
+mpirun -n 4 ./vqe/nwq_qflow -f ./H415.hamil --nparticles 4 --backend MPI --optimizer LN_NEWUOA --xacc --verbose --abstol 1e-10 --maxeval 20000 --gsd
+
+mpirun -n 4 ./vqe/nwq_qflow -f ./H415.hamil --nparticles 4 --backend MPI --optimizer LN_NEWUOA --xacc --verbose --abstol 1e-10 --maxeval 20000 --gsd
+
+
+mpirun -n 4 ./vqe/nwq_vqe -f ./H415.hamil --nparticles 4 --backend MPI --abstol 1e-10 --maxeval 16000 --gsd --adapt --adapt-fvaltol -1
+
+
+
+
+
+./vqe/nwq_vqe -f ./H415.hamil -p 4 -v --abstol 1e-10 --maxeval 16000 --sym 2
+
+./vqe/nwq_qflow -f ./H415.hamil -p 4 --abstol 1e-10 --maxeval 16000 --sym 2 -o LN_NEWUOA -v
+
+./vqe/nwq_vqe -f ./H415.hamil -p 4 -v --abstol 1e-10 --maxeval 16000 --adapt --adapt-fvaltol -1
+
+
+mpirun -n 4 ./vqe/nwq_qflow -f ./LiH34.hamil -p 4 -b MPI -o LN_NEWUOA -v --abstol 1e-10 --maxeval 4000 --lbound -0.9 --ubound 0.9 --symm 2 > lih34_qflow_uccsdsym2.txt
+mpirun -n 4 ./vqe/nwq_vqe -f ./LiH34.hamil -p 4 -b MPI --abstol 1e-10 --maxeval 4000 -lb -0.9 -ub 0.9 --adapt --adapt-fvaltol -1 > lih34_adavqe_uccsd.txt
+
+
+mpirun -n 4 ./vqe/nwq_qflow -f ./LiH34.hamil -p 4 -b MPI -o LN_NEWUOA -v --abstol 1e-10 --maxeval 4000 --lbound -0.9 --ubound 0.9 --gsd > lih34_qflow_gsd.txt
+mpirun -n 4 ./vqe/nwq_vqe -f ./LiH34.hamil -p 4 -b MPI --abstol 1e-10 --maxeval 16000 -lb -0.9 -ub 0.9 --gsd --adapt --adapt-fvaltol -1 > lih34_adavqe_gsd.txt
+
+
+./vqe/nwq_vqe -f ./Input_Data/bz66ducc3.hamil -p 6 -v --abstol 1e-10 -lb -0.9 -ub 0.9 --maxeval 16000 --adapt -ag 5e-3 --adapt-fvaltol -1 --qubit > bz66ducc3_qasm.txt
+
+
+
+ ./vqe/nwq_vqe -f ./Input_Data/bz66ducc3.hamil -p 6 -v --abstol 1e-10 -lb -0.9 -ub 0.9 --maxeval 16000 -o LN_BOBYQA --adapt -ag 1e-4 --qubit

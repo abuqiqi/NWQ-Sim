@@ -115,7 +115,23 @@ Use `generate_fermionic_excitations()` in `vqe/src/ansatz_pool.cpp` ~~`vqe/src/u
 
 ## Change things related to NLOPT optimizer
 
-Note that three are three `optimize()` functions:
+Note that there are three `optimize()` functions:
     1. `vqe/include/vqe_state.hpp`
     2. `vqe/include/svsim_vqe/sv_mpi_vqe.hpp`
     3. `vqe/include/svsim_vqe/sv_cuda_mpi_vqe.cuh`
+
+
+
+# Calculations
+
+
+## Grouping Paulis in the Hamiltonian
+
+The Hamiltonian QWC clique generation happens through the `sorted_insertion()` function in `utils.hpp`, which is indirectly called during the initialization of the `VQEState`  class. The function partitions the Pauli operators of the Hamiltonian into cliques where all operators within a clique commute with each other qubit-wise.
+This partitioning is crucial for efficient measurement of the Hamiltonian expectation value, as operators in the same QWC clique can be measured simultaneously, reducing the number of required measurements.
+
+Function `sorted_insertion()` is called by `getJordanWignerTransform()` in `jw.cpp`.
+
+## Expectation Calculation
+
+The returned expectation value is stored in the `expectation_value` field of the `VQEState` class. The `expectation_value` in `VQEState` is updated in the `call_simulator()` method of each backend implementation. The actual computation of expectation values happens during the simulation of the measurement circuit, where the `EXPECT` gate operation calculates the expectation value for each Pauli term in the Hamiltonian and stores it in the corresponding `ObservableList` structure. The `call_simulator()` method then accumulates these values to get the total expectation value.
