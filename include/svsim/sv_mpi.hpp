@@ -206,9 +206,9 @@ namespace NWQSim
                     }
                     avg_sim_time /= (double)n_cpus;
                     printf("\n============== SV-Sim ===============\n");
-                    printf("nqubits:%lld, n_gates:%lld, sim_gates:%lld, n_nodes:%lld, sim:%.3lf ms, mem_per_node:%.3lf MB, total_mem:%.3lf MB, \n",
+                    printf("nqubits:%lld, n_gates:%lld, sim_gates:%lld, n_nodes:%lld, sim:%.3lf s, mem_per_node:%.3lf MB, total_mem:%.3lf MB, \n",
                            n_qubits, origional_gates, n_gates, n_cpus,
-                           avg_sim_time, cpu_mem / 1024 / 1024,
+                           avg_sim_time / 1000, cpu_mem / 1024 / 1024,
                            n_cpus * cpu_mem / 1024 / 1024);
                     printf("=====================================\n");
                     SAFE_FREE_HOST(sim_times);
@@ -355,8 +355,8 @@ namespace NWQSim
             for (int i = 0; i < n_gates; i++)
             {
 
-                if (Config::PRINT_SIM_TRACE && i_proc == 0)
-                    printProgressBar(i, n_gates, start);
+                // if (Config::PRINT_SIM_TRACE && i_proc == 0)
+                //     printProgressBar(i, n_gates, start);
 
                 auto g = gates[i];
 

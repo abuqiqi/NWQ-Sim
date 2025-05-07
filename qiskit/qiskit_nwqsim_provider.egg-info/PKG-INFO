@@ -1,0 +1,35 @@
+Metadata-Version: 2.2
+Name: qiskit-nwqsim-provider
+Version: 0.1
+Summary: Qiskit simulator whose backend is based on the NWQSim simulator
+Home-page: https://github.com/pnnl/svsim/qiskit-nwqsim-provider
+Author: Ang Li
+Author-email: ang.li@pnnl.gov
+License: MIT
+Keywords: qiskit quantum nwqsim dmsim svsim
+Classifier: Environment :: Console
+Classifier: License :: OSI Approved :: MIT Software License
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: MacOS
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Topic :: Scientific/Engineering
+Requires-Python: >3.8.0
+Requires-Dist: qiskit-terra>=0.8
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+This module contains [Qiskit](https://www.qiskit.org/) simulator whose backend is written in NWQSim simulator. This simulator simulate a Quantum circuit on a classical computer.

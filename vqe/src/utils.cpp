@@ -178,7 +178,7 @@ std::string to_fermionic_string(const std::vector<FermionOperator>& product, con
 };
 
 
-const std::regex pattern("^\\s*(\\d+)\\s+(\\d+)\\s+(?:(\\d+)\\s+(\\d+)){0,1}\\s+([\\d\\.\\+e-]+)", std::regex_constants::multiline);
+const std::regex pattern("^\\s*(\\d+)\\s+(\\d+)\\s+(?:(\\d+)\\s+(\\d+)){0,1}\\s+([\\d\\.\\+e-]+)", std::regex_constants::ECMAScript | std::regex_constants::icase); // std::regex_constants::multiline);
 /**
  * @brief Read in a set of amplitudes
  * @note   
