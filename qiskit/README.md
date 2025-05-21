@@ -9,7 +9,7 @@ pip install importlib_resources
 
 3) Build the package
 ```bash
-python setup build
+python setup.py build
 ```
 
 4) Install the package
