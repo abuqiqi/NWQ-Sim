@@ -36,6 +36,7 @@ namespace NWQSim
             MPI_Comm_rank(MPI_COMM_WORLD, &rank);
             MPI_Comm_size(MPI_COMM_WORLD, &size);
             comm_global = MPI_COMM_WORLD;
+            comm_time = 0.0;
 
             i_proc = (IdxType)rank;
             n_cpus = (IdxType)size;
@@ -77,6 +78,8 @@ namespace NWQSim
 
         ~SV_MPI()
         {
+            // Get communication time
+
             // Release for CPU side
             SAFE_FREE_HOST(sv_real);
             SAFE_FREE_HOST(sv_imag);
@@ -129,7 +132,9 @@ namespace NWQSim
             // synchronize the file writes with a basic point-point ticket lock
             if (i_proc != 0)
             {
+                auto start = MPI_Wtime();
                 MPI_Recv(&ticket, 1, MPI_INT64_T, i_proc - 1, i_proc, comm_global, MPI_STATUS_IGNORE);
+                comm_time += MPI_Wtime() - start;
             }
             if (outstream.is_open())
             {
@@ -140,14 +145,18 @@ namespace NWQSim
             }
             if (i_proc != n_cpus - 1)
             {
+                auto start = MPI_Wtime();
                 MPI_Send(&ticket, 1, MPI_INT64_T, i_proc + 1, i_proc + 1, comm_global);
+                comm_time += MPI_Wtime() - start;
             }
             // now for the imaginary part
             ticket = 1;
             // synchronize the file writes with a basic point-point ticket lock
             if (i_proc != 0)
             {
+                auto start = MPI_Wtime();
                 MPI_Recv(&ticket, 1, MPI_INT64_T, i_proc - 1, i_proc, comm_global, MPI_STATUS_IGNORE);
+                comm_time += MPI_Wtime() - start;
             }
             outstream.open(outpath, std::ios::out | std::ios::binary);
             if (outstream.is_open())
@@ -159,7 +168,9 @@ namespace NWQSim
             }
             if (i_proc != n_cpus - 1)
             {
+                auto start = MPI_Wtime();
                 MPI_Send(&ticket, 1, MPI_INT64_T, i_proc + 1, i_proc + 1, comm_global);
+                comm_time += MPI_Wtime() - start;
             }
         };
         void sim(std::shared_ptr<NWQSim::Circuit> circuit) override
@@ -173,6 +184,7 @@ namespace NWQSim
 
             double *sim_times;
             double sim_time;
+            double *comm_times;
             cpu_timer sim_timer;
 
             if (Config::PRINT_SIM_TRACE)
@@ -181,6 +193,8 @@ namespace NWQSim
                 {
                     SAFE_ALOC_HOST(sim_times, sizeof(double) * n_cpus);
                     memset(sim_times, 0, sizeof(double) * n_cpus);
+                    SAFE_ALOC_HOST(comm_times, sizeof(double) * n_cpus);
+                    memset(comm_times, 0, sizeof(double) * n_cpus);
                 }
                 MPI_Barrier(MPI_COMM_WORLD);
                 sim_timer.start_timer();
@@ -197,21 +211,27 @@ namespace NWQSim
                 MPI_Barrier(MPI_COMM_WORLD);
                 MPI_Gather(&sim_time, 1, MPI_DOUBLE,
                            &sim_times[i_proc], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+                MPI_Gather(&comm_time, 1, MPI_DOUBLE,
+                           &comm_times[i_proc], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
                 if (i_proc == 0)
                 {
                     double avg_sim_time = 0;
+                    double avg_comm_time = 0;
                     for (unsigned d = 0; d < n_cpus; d++)
                     {
                         avg_sim_time += sim_times[d];
+                        avg_comm_time += comm_times[d];
                     }
                     avg_sim_time /= (double)n_cpus;
+                    avg_comm_time /= (double)n_cpus;
                     printf("\n============== SV-Sim ===============\n");
-                    printf("nqubits:%lld, n_gates:%lld, sim_gates:%lld, n_nodes:%lld, sim:%.3lf s, mem_per_node:%.3lf MB, total_mem:%.3lf MB, \n",
+                    printf("nqubits:%lld, n_gates:%lld, sim_gates:%lld, n_nodes:%lld, sim:%.3lf s, comm:%.3lf s, mem_per_node:%.3lf MB, total_mem:%.3lf MB, \n",
                            n_qubits, origional_gates, n_gates, n_cpus,
-                           avg_sim_time / 1000, cpu_mem / 1024 / 1024,
+                           avg_sim_time / 1000, avg_comm_time / 1000, cpu_mem / 1024 / 1024,
                            n_cpus * cpu_mem / 1024 / 1024);
                     printf("=====================================\n");
                     SAFE_FREE_HOST(sim_times);
+                    SAFE_FREE_HOST(comm_times);
                 }
             }
         }
@@ -250,7 +270,9 @@ namespace NWQSim
             // Gather the results from all nodes at the root
             double result = 0.0;
 
+            auto start = MPI_Wtime();
             MPI_Reduce(&local_result, &result, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            comm_time += MPI_Wtime() - start;
 
             // Return the final result
             return result;
@@ -274,7 +296,9 @@ namespace NWQSim
             // Gather the results from all nodes at the root
             double result = 0.0;
 
+            auto start = MPI_Wtime();
             MPI_Reduce(&local_result, &result, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            comm_time += MPI_Wtime() - start;
 
             // Return the final result
             return result;
@@ -290,10 +314,12 @@ namespace NWQSim
                 SAFE_ALOC_HOST(sv_diag_imag, dim * sizeof(ValType));
 
             MPI_Barrier(MPI_COMM_WORLD);
+            auto start = MPI_Wtime();
             MPI_Gather(sv_real, m_cpu, MPI_DOUBLE,
                        &sv_diag_real[i_proc * m_cpu], m_cpu, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             MPI_Gather(sv_imag, m_cpu, MPI_DOUBLE,
                        &sv_diag_imag[i_proc * m_cpu], m_cpu, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+            comm_time += MPI_Wtime() - start;
             MPI_Barrier(MPI_COMM_WORLD);
 
             if (i_proc == 0)
@@ -327,6 +353,7 @@ namespace NWQSim
         IdxType n_cpus;
         IdxType lg2_m_cpu;
         IdxType m_cpu;
+        double comm_time;
 
         // CPU arrays
         ValType *sv_real;
@@ -464,20 +491,24 @@ namespace NWQSim
                 // these nodes send their sv to the pairs
                 if (i_proc > pair_cpu)
                 {
+                    auto start = MPI_Wtime();
                     // Send own partial statevector to remote nodes
                     MPI_Send(sv_real, per_pe_work, MPI_DOUBLE, pair_cpu, 0, MPI_COMM_WORLD);
                     MPI_Send(sv_imag, per_pe_work, MPI_DOUBLE, pair_cpu, 1, MPI_COMM_WORLD);
                     // Recevive partial statevector back
                     MPI_Recv(sv_real, per_pe_work, MPI_DOUBLE, pair_cpu, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     MPI_Recv(sv_imag, per_pe_work, MPI_DOUBLE, pair_cpu, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    comm_time += MPI_Wtime() - start;
                 }
                 else
                 {
                     ValType *sv_real_remote = m_real;
                     ValType *sv_imag_remote = m_imag;
 
+                    auto start = MPI_Wtime();
                     MPI_Recv(sv_real_remote, per_pe_work, MPI_DOUBLE, pair_cpu, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     MPI_Recv(sv_imag_remote, per_pe_work, MPI_DOUBLE, pair_cpu, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    comm_time += MPI_Wtime() - start;
 
                     for (IdxType i = 0; i < per_pe_work; i++)
                     {
@@ -495,8 +526,10 @@ namespace NWQSim
                         LOCAL_P(sv_real_remote, i, real_pos1);
                         LOCAL_P(sv_imag_remote, i, imag_pos1);
                     }
+                    auto start = MPI_Wtime();
                     MPI_Send(sv_real_remote, per_pe_work, MPI_DOUBLE, pair_cpu, 2, MPI_COMM_WORLD);
                     MPI_Send(sv_imag_remote, per_pe_work, MPI_DOUBLE, pair_cpu, 3, MPI_COMM_WORLD);
+                    comm_time += MPI_Wtime() - start;
                 }
             }
         }
@@ -581,19 +614,24 @@ namespace NWQSim
 
                 if (i_proc > pair_cpu)
                 {
+                    auto start = MPI_Wtime();
                     // Send own partial statevector to remote nodes
                     MPI_Send(sv_real, per_pe_num, MPI_DOUBLE, pair_cpu, 0, MPI_COMM_WORLD);
                     MPI_Send(sv_imag, per_pe_num, MPI_DOUBLE, pair_cpu, 1, MPI_COMM_WORLD);
                     // Recevive partial statevector back
                     MPI_Recv(sv_real, per_pe_num, MPI_DOUBLE, pair_cpu, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     MPI_Recv(sv_imag, per_pe_num, MPI_DOUBLE, pair_cpu, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    comm_time += MPI_Wtime() - start;
                 }
                 else
                 {
                     ValType *sv_real_remote = m_real;
                     ValType *sv_imag_remote = m_imag;
+
+                    auto start = MPI_Wtime();
                     MPI_Recv(sv_real_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     MPI_Recv(sv_imag_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    comm_time += MPI_Wtime() - start;
 
                     IdxType index = (i_proc >> (q - (lg2_m_cpu) + 1)) << (q - (lg2_m_cpu));
                     index |= i_proc & (((IdxType)1 << (q - (lg2_m_cpu))) - 1);
@@ -656,8 +694,10 @@ namespace NWQSim
                             LOCAL_P(sv_imag, term + SV4IDX(2), res_imag[2]);
                         }
                     }
+                    auto start = MPI_Wtime();
                     MPI_Send(sv_real_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 2, MPI_COMM_WORLD);
                     MPI_Send(sv_imag_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 3, MPI_COMM_WORLD);
+                    comm_time += MPI_Wtime() - start;
                 }
             }
         }
@@ -761,8 +801,10 @@ namespace NWQSim
                 if (i_proc > pair_cpu)
                 {
                     // Send own partial statevector to remote nodes
+                    auto start = MPI_Wtime();
                     MPI_Send(sv_real, per_pe_num, MPI_DOUBLE, pair_cpu, 0, MPI_COMM_WORLD);
                     MPI_Send(sv_imag, per_pe_num, MPI_DOUBLE, pair_cpu, 1, MPI_COMM_WORLD);
+                    comm_time += MPI_Wtime() - start;
                 }
                 else
                 {
@@ -772,8 +814,10 @@ namespace NWQSim
                     // printf("%d %d %d %d\n", i_proc, (index)*per_pe_work, (index + 1) * per_pe_work, dim);
                     ValType *sv_real_remote = m_real;
                     ValType *sv_imag_remote = m_imag;
+                    auto start = MPI_Wtime();
                     MPI_Recv(sv_real_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     MPI_Recv(sv_imag_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    comm_time += MPI_Wtime() - start;
                     std::vector<bool> markers;
                     if (i_proc == 0)
                     {
@@ -983,8 +1027,10 @@ namespace NWQSim
                 if (i_proc > pair_cpu)
                 {
                     // Send own partial statevector to remote nodes
+                    auto start = MPI_Wtime();
                     MPI_Send(sv_real, per_pe_num, MPI_DOUBLE, pair_cpu, 0, MPI_COMM_WORLD);
                     MPI_Send(sv_imag, per_pe_num, MPI_DOUBLE, pair_cpu, 1, MPI_COMM_WORLD);
+                    comm_time += MPI_Wtime() - start;
                     // Recieve partial statevector back
                     return 0.0;
                 }
@@ -995,8 +1041,10 @@ namespace NWQSim
                     // printf("%d %d %d %d\n", i_proc, (index)*per_pe_work, (index + 1) * per_pe_work, dim);
                     ValType *sv_real_remote = m_real;
                     ValType *sv_imag_remote = m_imag;
+                    auto start = MPI_Wtime();
                     MPI_Recv(sv_real_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     MPI_Recv(sv_imag_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    comm_time += MPI_Wtime() - start;
 
                     for (IdxType i = index * per_pe_work; i < (index + 1) * per_pe_work; i++)
                     {
@@ -1073,7 +1121,9 @@ namespace NWQSim
                     sum += sv_real[i] * sv_real[i] + sv_imag[i] * sv_imag[i];
             }
             BARR_MPI;
+            auto start = MPI_Wtime();
             MPI_Allreduce(&sum, &prob_of_one, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            comm_time += MPI_Wtime() - start;
             BARR_MPI;
             if (rand < prob_of_one)
             {
@@ -1167,7 +1217,9 @@ namespace NWQSim
             for (IdxType i = 0; i < m_cpu; i++)
                 reduce += sv_real[i] * sv_real[i] + sv_imag[i] * sv_imag[i];
             BARR_MPI;
+            auto start = MPI_Wtime();
             MPI_Scan(&reduce, &partial, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            comm_time += MPI_Wtime() - start;
 
             if (i_proc == (n_cpus - 1)) // last node
             {
@@ -1206,7 +1258,9 @@ namespace NWQSim
                 }
             }
             BARR_MPI;
+            auto start = MPI_Wtime();
             MPI_Allreduce(results_local, results, repetition, MPI_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
+            comm_time += MPI_Wtime() - start;
         }
 
         void RESET_GATE(const IdxType qubit)
@@ -1224,7 +1278,9 @@ namespace NWQSim
                     m_real[i] = sv_real[i] * sv_real[i] + sv_imag[i] * sv_imag[i];
             }
             BARR_MPI;
+            auto start = MPI_Wtime();
             MPI_Allreduce(&sum, &prob_of_one, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            comm_time += MPI_Wtime() - start;
             BARR_MPI;
             if (prob_of_one < 1.0) // still possible to normalize
             {
@@ -1255,18 +1311,22 @@ namespace NWQSim
 
                     if (i_proc > pair_cpu)
                     {
+                        auto start = MPI_Wtime();
                         MPI_Send(sv_real, per_pe_work, MPI_DOUBLE, pair_cpu, 0, MPI_COMM_WORLD);
                         MPI_Send(sv_imag, per_pe_work, MPI_DOUBLE, pair_cpu, 1, MPI_COMM_WORLD);
                         MPI_Recv(sv_real_remote, per_pe_work, MPI_DOUBLE, pair_cpu, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                         MPI_Recv(sv_imag_remote, per_pe_work, MPI_DOUBLE, pair_cpu, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                        comm_time += MPI_Wtime() - start;
                     }
                     else
                     {
+                        auto start = MPI_Wtime();
                         MPI_Recv(sv_real_remote, per_pe_work, MPI_DOUBLE, pair_cpu, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                         MPI_Recv(sv_imag_remote, per_pe_work, MPI_DOUBLE, pair_cpu, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
                         MPI_Send(sv_real, per_pe_work, MPI_DOUBLE, pair_cpu, 2, MPI_COMM_WORLD);
                         MPI_Send(sv_imag, per_pe_work, MPI_DOUBLE, pair_cpu, 3, MPI_COMM_WORLD);
+                        comm_time += MPI_Wtime() - start;
                     }
                     BARR_MPI;
                     memcpy(sv_real, sv_real_remote, per_pe_work * sizeof(ValType));
@@ -1315,19 +1375,23 @@ namespace NWQSim
 
             if (i_proc > pair_cpu)
             {
+                auto start = MPI_Wtime();
                 // Send own partial statevector to remote nodes
                 MPI_Send(sv_real, per_pe_num, MPI_DOUBLE, pair_cpu, 0, MPI_COMM_WORLD);
                 MPI_Send(sv_imag, per_pe_num, MPI_DOUBLE, pair_cpu, 1, MPI_COMM_WORLD);
                 // Recevive partial statevector back
                 MPI_Recv(sv_real, per_pe_num, MPI_DOUBLE, pair_cpu, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 MPI_Recv(sv_imag, per_pe_num, MPI_DOUBLE, pair_cpu, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                comm_time += MPI_Wtime() - start;
             }
             else
             {
                 ValType *sv_real_remote = m_real;
                 ValType *sv_imag_remote = m_imag;
+                auto start = MPI_Wtime();
                 MPI_Recv(sv_real_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 MPI_Recv(sv_imag_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                comm_time += MPI_Wtime() - start;
 
                 IdxType index = (i_proc >> (q - (lg2_m_cpu) + 1)) << (q - (lg2_m_cpu));
                 index |= i_proc & (((IdxType)1 << (q - (lg2_m_cpu))) - 1);
@@ -1357,8 +1421,10 @@ namespace NWQSim
                     LOCAL_P(sv_real, term + SV4IDX(2), res_real[2]);
                     LOCAL_P(sv_imag, term + SV4IDX(2), res_imag[2]);
                 }
+                auto start = MPI_Wtime();
                 MPI_Send(sv_real_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 2, MPI_COMM_WORLD);
                 MPI_Send(sv_imag_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 3, MPI_COMM_WORLD);
+                comm_time += MPI_Wtime() - start;
             }
             // BARR_MPI;
         }
