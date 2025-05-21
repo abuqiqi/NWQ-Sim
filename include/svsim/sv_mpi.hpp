@@ -227,7 +227,7 @@ namespace NWQSim
                     printf("\n============== SV-Sim ===============\n");
                     printf("nqubits:%lld, n_gates:%lld, sim_gates:%lld, n_nodes:%lld, sim:%.3lf s, comm:%.3lf s, mem_per_node:%.3lf MB, total_mem:%.3lf MB, \n",
                            n_qubits, origional_gates, n_gates, n_cpus,
-                           avg_sim_time / 1000, avg_comm_time / 1000, cpu_mem / 1024 / 1024,
+                           avg_sim_time / 1000, avg_comm_time, cpu_mem / 1024 / 1024,
                            n_cpus * cpu_mem / 1024 / 1024);
                     printf("=====================================\n");
                     SAFE_FREE_HOST(sim_times);
@@ -526,7 +526,7 @@ namespace NWQSim
                         LOCAL_P(sv_real_remote, i, real_pos1);
                         LOCAL_P(sv_imag_remote, i, imag_pos1);
                     }
-                    auto start = MPI_Wtime();
+                    start = MPI_Wtime();
                     MPI_Send(sv_real_remote, per_pe_work, MPI_DOUBLE, pair_cpu, 2, MPI_COMM_WORLD);
                     MPI_Send(sv_imag_remote, per_pe_work, MPI_DOUBLE, pair_cpu, 3, MPI_COMM_WORLD);
                     comm_time += MPI_Wtime() - start;
@@ -694,7 +694,7 @@ namespace NWQSim
                             LOCAL_P(sv_imag, term + SV4IDX(2), res_imag[2]);
                         }
                     }
-                    auto start = MPI_Wtime();
+                    start = MPI_Wtime();
                     MPI_Send(sv_real_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 2, MPI_COMM_WORLD);
                     MPI_Send(sv_imag_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 3, MPI_COMM_WORLD);
                     comm_time += MPI_Wtime() - start;
@@ -1258,7 +1258,7 @@ namespace NWQSim
                 }
             }
             BARR_MPI;
-            auto start = MPI_Wtime();
+            start = MPI_Wtime();
             MPI_Allreduce(results_local, results, repetition, MPI_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
             comm_time += MPI_Wtime() - start;
         }
@@ -1421,7 +1421,7 @@ namespace NWQSim
                     LOCAL_P(sv_real, term + SV4IDX(2), res_real[2]);
                     LOCAL_P(sv_imag, term + SV4IDX(2), res_imag[2]);
                 }
-                auto start = MPI_Wtime();
+                start = MPI_Wtime();
                 MPI_Send(sv_real_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 2, MPI_COMM_WORLD);
                 MPI_Send(sv_imag_remote, per_pe_num, MPI_DOUBLE, pair_cpu, 3, MPI_COMM_WORLD);
                 comm_time += MPI_Wtime() - start;
