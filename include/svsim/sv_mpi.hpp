@@ -37,6 +37,7 @@ namespace NWQSim
             MPI_Comm_size(MPI_COMM_WORLD, &size);
             comm_global = MPI_COMM_WORLD;
             comm_time = 0.0;
+            sync_time = 0.0;
 
             i_proc = (IdxType)rank;
             n_cpus = (IdxType)size;
@@ -185,6 +186,7 @@ namespace NWQSim
             double *sim_times;
             double sim_time;
             double *comm_times;
+            double *sync_times;
             cpu_timer sim_timer;
 
             if (Config::PRINT_SIM_TRACE)
@@ -195,6 +197,8 @@ namespace NWQSim
                     memset(sim_times, 0, sizeof(double) * n_cpus);
                     SAFE_ALOC_HOST(comm_times, sizeof(double) * n_cpus);
                     memset(comm_times, 0, sizeof(double) * n_cpus);
+                    SAFE_ALOC_HOST(sync_times, sizeof(double) * n_cpus);
+                    memset(sync_times, 0, sizeof(double) * n_cpus);
                 }
                 MPI_Barrier(MPI_COMM_WORLD);
                 sim_timer.start_timer();
@@ -213,25 +217,31 @@ namespace NWQSim
                            &sim_times[i_proc], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
                 MPI_Gather(&comm_time, 1, MPI_DOUBLE,
                            &comm_times[i_proc], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+                MPI_Gather(&sync_time, 1, MPI_DOUBLE,
+                           &sync_times[i_proc], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
                 if (i_proc == 0)
                 {
                     double avg_sim_time = 0;
                     double avg_comm_time = 0;
+                    double avg_sync_time = 0;
                     for (unsigned d = 0; d < n_cpus; d++)
                     {
                         avg_sim_time += sim_times[d];
                         avg_comm_time += comm_times[d];
+                        avg_sync_time += sync_times[d];
                     }
                     avg_sim_time /= (double)n_cpus;
                     avg_comm_time /= (double)n_cpus;
+                    avg_sync_time /= (double)n_cpus;
                     printf("\n============== SV-Sim ===============\n");
-                    printf("nqubits:%lld, n_gates:%lld, sim_gates:%lld, n_nodes:%lld, sim:%.3lf s, comm:%.3lf s, mem_per_node:%.3lf MB, total_mem:%.3lf MB, \n",
+                    printf("nqubits:%lld, n_gates:%lld, sim_gates:%lld, n_nodes:%lld, sim:%.3lf s, comm:%.3lf s, sync:%.3lf s, mem_per_node:%.3lf MB, total_mem:%.3lf MB, \n",
                            n_qubits, origional_gates, n_gates, n_cpus,
-                           avg_sim_time / 1000, avg_comm_time, cpu_mem / 1024 / 1024,
+                           avg_sim_time / 1000, avg_comm_time, avg_sync_time, cpu_mem / 1024 / 1024,
                            n_cpus * cpu_mem / 1024 / 1024);
                     printf("=====================================\n");
                     SAFE_FREE_HOST(sim_times);
                     SAFE_FREE_HOST(comm_times);
+                    SAFE_FREE_HOST(sync_times);
                 }
             }
         }
@@ -313,14 +323,18 @@ namespace NWQSim
             if (i_proc == 0)
                 SAFE_ALOC_HOST(sv_diag_imag, dim * sizeof(ValType));
 
-            MPI_Barrier(MPI_COMM_WORLD);
             auto start = MPI_Wtime();
+            MPI_Barrier(MPI_COMM_WORLD);
+            sync_time += MPI_Wtime() - start;
+            start = MPI_Wtime();
             MPI_Gather(sv_real, m_cpu, MPI_DOUBLE,
                        &sv_diag_real[i_proc * m_cpu], m_cpu, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             MPI_Gather(sv_imag, m_cpu, MPI_DOUBLE,
                        &sv_diag_imag[i_proc * m_cpu], m_cpu, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             comm_time += MPI_Wtime() - start;
+            start = MPI_Wtime();
             MPI_Barrier(MPI_COMM_WORLD);
+            sync_time += MPI_Wtime() - start;
 
             if (i_proc == 0)
             {
@@ -354,6 +368,7 @@ namespace NWQSim
         IdxType lg2_m_cpu;
         IdxType m_cpu;
         double comm_time;
+        double sync_time;
 
         // CPU arrays
         ValType *sv_real;
@@ -390,7 +405,9 @@ namespace NWQSim
                 // only need sync when operating on remote qubits
                 if ((g.ctrl >= lg2_m_cpu) || (g.qubit >= lg2_m_cpu))
                 {
+                    auto start = MPI_Wtime();
                     BARR_MPI;
+                    sync_time += MPI_Wtime() - start;
                 }
 
                 if (g.op_name == OP::RESET)
@@ -414,9 +431,13 @@ namespace NWQSim
                     if ((g.ctrl >= lg2_m_cpu) && (g.qubit >= lg2_m_cpu))
                     {
                         SWAP_GATE(0, g.ctrl);
+                        auto start = MPI_Wtime();
                         BARR_MPI;
+                        sync_time += MPI_Wtime() - start;
                         C2V1_GATE(g.gm_real, g.gm_imag, 0, g.qubit);
+                        start = MPI_Wtime();
                         BARR_MPI;
+                        sync_time += MPI_Wtime() - start;
                         SWAP_GATE(0, g.ctrl);
                     }
                     else
@@ -426,10 +447,14 @@ namespace NWQSim
                 }
                 else if (g.op_name == OP::EXPECT)
                 {
+                    auto start = MPI_Wtime();
                     BARR_MPI;
+                    sync_time += MPI_Wtime() - start;
                     ObservableList *o = (ObservableList *)(g.data);
                     EXPECT_GATE(o);
+                    start = MPI_Wtime();
                     BARR_MPI;
+                    sync_time += MPI_Wtime() - start;
                 }
                 else
                 {
@@ -446,7 +471,9 @@ namespace NWQSim
                 // only need sync when operating on remote qubits
                 if ((g.ctrl >= lg2_m_cpu) || (g.qubit >= lg2_m_cpu))
                 {
+                    auto start = MPI_Wtime();
                     BARR_MPI;
+                    sync_time += MPI_Wtime() - start;
                 }
             }
         }
@@ -930,7 +957,9 @@ namespace NWQSim
                         }
                     }
                 }
+                auto start = MPI_Wtime();
                 BARR_MPI;
+                sync_time += MPI_Wtime() - start;
                 return exp_val;
             }
         }
@@ -1120,11 +1149,15 @@ namespace NWQSim
                 if ((idx & mask) != 0)
                     sum += sv_real[i] * sv_real[i] + sv_imag[i] * sv_imag[i];
             }
-            BARR_MPI;
             auto start = MPI_Wtime();
+            BARR_MPI;
+            sync_time += MPI_Wtime() - start;
+            start = MPI_Wtime();
             MPI_Allreduce(&sum, &prob_of_one, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             comm_time += MPI_Wtime() - start;
+            start = MPI_Wtime();
             BARR_MPI;
+            sync_time += MPI_Wtime() - start;
             if (rand < prob_of_one)
             {
                 ValType factor = 1. / sqrt(prob_of_one);
@@ -1162,7 +1195,9 @@ namespace NWQSim
                 }
             }
             results[0] = (rand <= prob_of_one ? 1 : 0);
+            start = MPI_Wtime();
             BARR_MPI;
+            sync_time += MPI_Wtime() - start;
         }
         // Compute the expectation value for a single operator in the diagonal basis
         double EXPECT_C0_GATE(IdxType zmask)
@@ -1216,8 +1251,11 @@ namespace NWQSim
             ValType partial = 0;
             for (IdxType i = 0; i < m_cpu; i++)
                 reduce += sv_real[i] * sv_real[i] + sv_imag[i] * sv_imag[i];
-            BARR_MPI;
+            
             auto start = MPI_Wtime();
+            BARR_MPI;
+            sync_time += MPI_Wtime() - start;
+            start = MPI_Wtime();
             MPI_Scan(&reduce, &partial, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             comm_time += MPI_Wtime() - start;
 
@@ -1227,12 +1265,15 @@ namespace NWQSim
                 if (fabs(purity - 1.0) > ERROR_BAR)
                     printf("MA: Purity Check fails with %lf\n", purity);
             }
-
+            start = MPI_Wtime();
             BARR_MPI;
+            sync_time += MPI_Wtime() - start;
             m_real[0] = (partial - reduce); // per-node incremental val
             for (IdxType i = 1; i < m_cpu; i++)
                 m_real[i] = m_real[i - 1] + ((sv_real[i - 1] * sv_real[i - 1]) + (sv_imag[i - 1] * sv_imag[i - 1]));
+            start = MPI_Wtime();
             BARR_MPI;
+            sync_time += MPI_Wtime() - start;
 
             for (IdxType j = 0; j < n_size; j++)
             {
@@ -1257,7 +1298,9 @@ namespace NWQSim
                     }
                 }
             }
+            start = MPI_Wtime();
             BARR_MPI;
+            sync_time += MPI_Wtime() - start;
             start = MPI_Wtime();
             MPI_Allreduce(results_local, results, repetition, MPI_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
             comm_time += MPI_Wtime() - start;
@@ -1277,11 +1320,15 @@ namespace NWQSim
                 if ((idx & mask) != 0)
                     m_real[i] = sv_real[i] * sv_real[i] + sv_imag[i] * sv_imag[i];
             }
-            BARR_MPI;
             auto start = MPI_Wtime();
+            BARR_MPI;
+            sync_time += MPI_Wtime() - start;
+            start = MPI_Wtime();
             MPI_Allreduce(&sum, &prob_of_one, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             comm_time += MPI_Wtime() - start;
+            start = MPI_Wtime();
             BARR_MPI;
+            sync_time += MPI_Wtime() - start;
             if (prob_of_one < 1.0) // still possible to normalize
             {
                 ValType factor = 1.0 / sqrt(1.0 - prob_of_one);
@@ -1328,7 +1375,9 @@ namespace NWQSim
                         MPI_Send(sv_imag, per_pe_work, MPI_DOUBLE, pair_cpu, 3, MPI_COMM_WORLD);
                         comm_time += MPI_Wtime() - start;
                     }
+                    auto start = MPI_Wtime();
                     BARR_MPI;
+                    sync_time += MPI_Wtime() - start;
                     memcpy(sv_real, sv_real_remote, per_pe_work * sizeof(ValType));
                     memcpy(sv_imag, sv_imag_remote, per_pe_work * sizeof(ValType));
                 }
@@ -1347,7 +1396,9 @@ namespace NWQSim
                     }
                 }
             }
+            start = MPI_Wtime();
             BARR_MPI;
+            sync_time += MPI_Wtime() - start;
         }
 
         //============== SWAP Gate ================
